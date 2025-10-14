@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install pg)",
+      "Bash(pnpm install)",
+      "Bash(pnpm dev)",
+      "Bash(curl:*)",
+      "Bash(test:*)",
+      "Bash(cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

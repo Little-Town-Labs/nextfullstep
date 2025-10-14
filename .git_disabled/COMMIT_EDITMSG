@@ -1,0 +1,10 @@
+feat: Implement AI Coaching Prompt Management and Big Five Results Upload
+
+- Added a new admin page for managing AI coaching prompts, allowing updates and resets to default.
+- Created API endpoints for fetching and updating AI coaching prompts with admin authorization.
+- Introduced functionality for importing Big Five personality results from CSV files, including parsing and database storage.
+- Developed user interface for uploading Big Five results, including file selection and user ID input.
+- Implemented retrieval of user test IDs for displaying previously conducted Big Five tests.
+- Enhanced the Big Five results display page to show categorized results based on user test ID.
+- Added necessary database entities for AI coaching prompts and Big Five results.
+- Updated header navigation to include links for new features related to Big Five results and AI coaching.

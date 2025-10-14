@@ -5,6 +5,7 @@
 .*/
 !.git/
 !.github/
+.roomodes
 
 # dependencies
 /node_modules

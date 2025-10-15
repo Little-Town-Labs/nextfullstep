@@ -238,7 +238,7 @@ export default function CareersPage() {
         <div className="mt-16 bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-10">
           <div className="text-center mb-10">
             <h3 className="text-3xl font-bold text-gray-900 mb-3">
-              What You'll Get
+              What You&apos;ll Get
             </h3>
             <p className="text-gray-600 max-w-2xl mx-auto">
               Everything you need to transition into your AI career

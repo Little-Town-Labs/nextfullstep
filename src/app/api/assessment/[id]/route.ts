@@ -236,19 +236,18 @@ export async function POST(
 
     for (const phase of parsedRoadmap.phases) {
       for (const task of phase.tasks) {
-        const taskEntity = taskRepo.create({
-          roadmapId: roadmap.id,
-          userId: assessment.userId,
-          phaseId: phase.phaseId,
-          phaseName: phase.phaseName,
-          title: task.title,
-          description: task.description,
-          priority: task.priority,
-          estimatedHours: task.estimatedHours,
-          status: "pending",
-          sortOrder: task.sortOrder,
-          resources: task.resources ? JSON.stringify(task.resources) : undefined,
-        });
+        const taskEntity = new RoadmapTaskEntity();
+        taskEntity.roadmapId = roadmap.id;
+        taskEntity.userId = assessment.userId;
+        taskEntity.phaseId = phase.phaseId;
+        taskEntity.phaseName = phase.phaseName;
+        taskEntity.title = task.title;
+        taskEntity.description = task.description;
+        taskEntity.priority = task.priority;
+        taskEntity.estimatedHours = task.estimatedHours;
+        taskEntity.status = "pending";
+        taskEntity.sortOrder = task.sortOrder;
+        taskEntity.resources = task.resources ? JSON.stringify(task.resources) : undefined;
         taskEntities.push(taskEntity);
       }
     }

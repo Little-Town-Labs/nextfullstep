@@ -3,12 +3,9 @@ import { UserEntity } from '@/entities/UserEntity';
 
 /**
  * Get user from database by Clerk ID
+ * Database is already initialized in middleware at startup
  */
 export async function getUserByClerkId(clerkUserId: string): Promise<UserEntity | null> {
-  if (!AppDataSource.isInitialized) {
-    await AppDataSource.initialize();
-  }
-
   const userRepository = AppDataSource.getRepository(UserEntity);
   return await userRepository.findOne({ where: { clerkUserId } });
 }

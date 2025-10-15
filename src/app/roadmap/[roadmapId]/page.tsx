@@ -61,6 +61,7 @@ export default function RoadmapPage() {
 
   useEffect(() => {
     fetchRoadmap();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roadmapId]);
 
   const fetchRoadmap = async () => {
@@ -174,7 +175,7 @@ export default function RoadmapPage() {
           <CardHeader>
             <CardTitle>Roadmap Not Found</CardTitle>
             <CardDescription>
-              The roadmap you're looking for doesn't exist.
+              The roadmap you&apos;re looking for doesn&apos;t exist.
             </CardDescription>
           </CardHeader>
           <CardContent>

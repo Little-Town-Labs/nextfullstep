@@ -34,20 +34,38 @@ export const AppDataSource = new DataSource({
   subscribers: [],
 });
 
-let isInitialized = false;
+// Singleton initialization promise to prevent concurrent initialization
+let initializationPromise: Promise<DataSource> | null = null;
 
 /**
  * Initialize the database connection
- * Call this at the start of API routes
  * Safe to call multiple times - only initializes once
+ * Returns the same promise if initialization is already in progress
  */
 export async function initializeDatabase(): Promise<DataSource> {
-  if (!isInitialized && !AppDataSource.isInitialized) {
-    await AppDataSource.initialize();
-    isInitialized = true;
-    console.log("Database connection initialized");
+  // If already initialized, return immediately
+  if (AppDataSource.isInitialized) {
+    return AppDataSource;
   }
-  return AppDataSource;
+
+  // If initialization is in progress, return the existing promise
+  if (initializationPromise) {
+    return initializationPromise;
+  }
+
+  // Start initialization
+  initializationPromise = AppDataSource.initialize()
+    .then(() => {
+      console.log("✅ Database connection initialized successfully");
+      return AppDataSource;
+    })
+    .catch((error) => {
+      console.error("❌ Database initialization failed:", error);
+      initializationPromise = null; // Reset so it can be retried
+      throw error;
+    });
+
+  return initializationPromise;
 }
 
 /**

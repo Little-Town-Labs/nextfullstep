@@ -55,29 +55,24 @@ export async function POST(req: Request) {
     const { id, email_addresses, first_name, last_name, image_url } = evt.data;
 
     try {
-      // Initialize database connection
-      if (!AppDataSource.isInitialized) {
-        await AppDataSource.initialize();
-      }
-
+      // Database is already initialized in middleware at startup
       const userRepository = AppDataSource.getRepository(UserEntity);
 
       // Create new user in database
-      const newUser = userRepository.create({
-        clerkUserId: id,
-        email: email_addresses[0]?.email_address || '',
-        name: `${first_name || ''} ${last_name || ''}`.trim() || null,
-        profileImageUrl: image_url || null,
-        subscriptionTier: 'free',
-        subscriptionStatus: 'active',
-        assessmentsUsed: 0,
-        assessmentsLimit: 1,
-        roadmapsUsed: 0,
-        roadmapsLimit: 1,
-        onboardingCompleted: false,
-        status: 'active',
-        usageResetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-      });
+      const newUser = new UserEntity();
+      newUser.clerkUserId = id;
+      newUser.email = email_addresses[0]?.email_address || '';
+      newUser.name = `${first_name || ''} ${last_name || ''}`.trim() || undefined;
+      newUser.profileImageUrl = image_url || undefined;
+      newUser.subscriptionTier = 'free';
+      newUser.subscriptionStatus = 'active';
+      newUser.assessmentsUsed = 0;
+      newUser.assessmentsLimit = 1;
+      newUser.roadmapsUsed = 0;
+      newUser.roadmapsLimit = 1;
+      newUser.onboardingCompleted = false;
+      newUser.status = 'active';
+      newUser.usageResetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
 
       await userRepository.save(newUser);
 
@@ -92,10 +87,7 @@ export async function POST(req: Request) {
     const { id, email_addresses, first_name, last_name, image_url } = evt.data;
 
     try {
-      if (!AppDataSource.isInitialized) {
-        await AppDataSource.initialize();
-      }
-
+      // Database is already initialized in middleware at startup
       const userRepository = AppDataSource.getRepository(UserEntity);
       const user = await userRepository.findOne({ where: { clerkUserId: id } });
 
@@ -117,10 +109,7 @@ export async function POST(req: Request) {
     const { id } = evt.data;
 
     try {
-      if (!AppDataSource.isInitialized) {
-        await AppDataSource.initialize();
-      }
-
+      // Database is already initialized in middleware at startup
       const userRepository = AppDataSource.getRepository(UserEntity);
       const user = await userRepository.findOne({ where: { clerkUserId: id } });
 

@@ -1,24 +1,53 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { getRepository } from "@/lib/data-source";
 import { CareerAssessmentEntity } from "@/entities/CareerAssessmentEntity";
 import { CareerRoleEntity } from "@/entities/CareerRoleEntity";
+import { checkAssessmentLimit, incrementAssessmentUsage } from "@/lib/subscription";
 
 /**
  * Assessment API Routes
  *
- * POST /api/assessment - Start new assessment
- * GET /api/assessment?userId=X&roleId=Y - Get user's assessment for role
+ * POST /api/assessment - Start new assessment (Clerk auth required)
+ * GET /api/assessment?id=X - Get assessment by ID (Clerk auth required)
  */
 
 // Start new assessment
 export async function POST(req: NextRequest) {
   try {
-    const { userId, roleId } = await req.json();
+    // Authenticate with Clerk
+    const { userId: clerkUserId } = await auth();
 
-    if (!userId || !roleId) {
+    if (!clerkUserId) {
       return NextResponse.json(
-        { error: "Missing userId or roleId" },
+        { error: "Unauthorized - Please sign in" },
+        { status: 401 }
+      );
+    }
+
+    const { roleId } = await req.json();
+
+    if (!roleId) {
+      return NextResponse.json(
+        { error: "Missing roleId" },
         { status: 400 }
+      );
+    }
+
+    // Check assessment limit based on subscription tier
+    const limitCheck = await checkAssessmentLimit(clerkUserId);
+
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: "Assessment limit reached",
+          message: `You've reached your assessment limit (${limitCheck.current}/${limitCheck.limit}). Upgrade to Pro for unlimited assessments.`,
+          current: limitCheck.current,
+          limit: limitCheck.limit,
+          tier: limitCheck.tier,
+          upgradeRequired: true
+        },
+        { status: 403 }
       );
     }
 
@@ -33,7 +62,7 @@ export async function POST(req: NextRequest) {
     // Check if user already has an assessment for this role
     const assessmentRepo = await getRepository(CareerAssessmentEntity);
     const existing = await assessmentRepo.findOne({
-      where: { userId, roleId, status: "in_progress" },
+      where: { userId: clerkUserId, roleId, status: "in_progress" },
     });
 
     if (existing) {
@@ -54,7 +83,7 @@ export async function POST(req: NextRequest) {
 
     // Create new assessment
     const assessment = assessmentRepo.create({
-      userId,
+      userId: clerkUserId,
       roleId,
       roleName: role.name,
       status: "in_progress",
@@ -63,6 +92,11 @@ export async function POST(req: NextRequest) {
     });
 
     await assessmentRepo.save(assessment);
+
+    // Increment usage count for free tier users
+    if (limitCheck.tier === 'free') {
+      await incrementAssessmentUsage(clerkUserId);
+    }
 
     return NextResponse.json({
       success: true,
@@ -75,6 +109,11 @@ export async function POST(req: NextRequest) {
         responses: [],
       },
       message: "Assessment started",
+      usage: {
+        current: limitCheck.current + 1,
+        limit: limitCheck.limit,
+        tier: limitCheck.tier,
+      }
     });
   } catch (error: any) {
     console.error("Error starting assessment:", error);
@@ -88,9 +127,17 @@ export async function POST(req: NextRequest) {
 // Get assessment
 export async function GET(req: NextRequest) {
   try {
+    // Authenticate with Clerk
+    const { userId: clerkUserId } = await auth();
+
+    if (!clerkUserId) {
+      return NextResponse.json(
+        { error: "Unauthorized - Please sign in" },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-    const roleId = searchParams.get("roleId");
     const assessmentId = searchParams.get("id");
 
     const assessmentRepo = await getRepository(CareerAssessmentEntity);
@@ -105,6 +152,14 @@ export async function GET(req: NextRequest) {
         return NextResponse.json(
           { error: "Assessment not found" },
           { status: 404 }
+        );
+      }
+
+      // Verify the assessment belongs to the authenticated user
+      if (assessment.userId !== clerkUserId) {
+        return NextResponse.json(
+          { error: "Forbidden - You don't have access to this assessment" },
+          { status: 403 }
         );
       }
 
@@ -139,36 +194,9 @@ export async function GET(req: NextRequest) {
           completedAt: assessment.completedAt,
         },
       });
-    } else if (userId && roleId) {
-      // Get user's assessment for role
-      const assessment = await assessmentRepo.findOne({
-        where: { userId, roleId },
-        order: { startedAt: "DESC" },
-      });
-
-      if (!assessment) {
-        return NextResponse.json(
-          { error: "No assessment found" },
-          { status: 404 }
-        );
-      }
-
-      return NextResponse.json({
-        success: true,
-        assessment: {
-          id: assessment.id,
-          roleId: assessment.roleId,
-          roleName: assessment.roleName,
-          status: assessment.status,
-          currentQuestionNumber: assessment.currentQuestionNumber,
-          responses: assessment.responses
-            ? JSON.parse(assessment.responses)
-            : [],
-        },
-      });
     } else {
       return NextResponse.json(
-        { error: "Missing required parameters" },
+        { error: "Missing assessment ID parameter" },
         { status: 400 }
       );
     }

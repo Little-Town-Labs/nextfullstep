@@ -2,50 +2,68 @@ import * as React from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
-import { IconSeparator, IconVercel } from '@/components/ui/icons'
-import EnvCard from './cards/envcard'
+import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 
 export async function Header() {
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between w-full h-16 px-4 border-b shrink-0 bg-white ">  
-      <EnvCard />
-      <Link href="/" rel="nofollow" className="mr-2 font-bold">
-        Next.js AI Lite
-      </Link>
-      <IconSeparator />
-      <Link
-        href="/genui"
-        className={cn(buttonVariants({ variant: 'link' }), "mr-auto font-normal")}
-      >
-        <span className="hidden md:flex">GenUI</span>
-      </Link>
-      <Link
-        href="/bigfiveResults/upload"
-        className={cn(buttonVariants({ variant: 'link' }), "font-normal")}
-      >
-        Upload Big Five Results
-      </Link>
-      <Link
-        href="/bigfiveResults/userTests"
-        className={cn(buttonVariants({ variant: 'link' }), "font-normal")}
-      >
-        My Big Five Tests
-      </Link>
-      <Link
-        href="/admin/ai-coaching-prompt"
-        className={cn(buttonVariants({ variant: 'link' }), "font-normal")}
-      >
-        AI Coaching Prompt
-      </Link>
-      <Link
-        href="https://vercel.com/new"
-        target="_blank"
-        className={cn(buttonVariants())}
-      >
-        <IconVercel className="mr-2" />
-        <span className="hidden sm:block">Deploy to Vercel</span>
-        <span className="sm:hidden">Deploy</span>
-      </Link>
+    <header className="sticky top-0 z-50 flex items-center justify-between w-full h-16 px-4 border-b shrink-0 bg-white backdrop-blur-sm bg-white/90">
+      <div className="flex items-center gap-4">
+        <Link href="/" rel="nofollow" className="text-xl font-bold text-gray-900 hover:text-gray-700 transition-colors">
+          NextFullStep
+        </Link>
+      </div>
+
+      <nav className="flex items-center gap-1">
+        <Link
+          href="/careers"
+          className={cn(buttonVariants({ variant: 'ghost' }), "font-normal")}
+        >
+          Careers
+        </Link>
+
+        <SignedIn>
+          <Link
+            href="/dashboard"
+            className={cn(buttonVariants({ variant: 'ghost' }), "font-normal")}
+          >
+            Dashboard
+          </Link>
+        </SignedIn>
+
+        <Link
+          href="/pricing"
+          className={cn(buttonVariants({ variant: 'ghost' }), "font-normal")}
+        >
+          Pricing
+        </Link>
+
+        <SignedOut>
+          <SignInButton mode="modal">
+            <button className={cn(buttonVariants({ variant: 'ghost' }))}>
+              Sign In
+            </button>
+          </SignInButton>
+          <Link
+            href="/sign-up"
+            className={cn(buttonVariants({ variant: 'default' }), "ml-2")}
+          >
+            Get Started
+          </Link>
+        </SignedOut>
+
+        <SignedIn>
+          <div className="ml-2">
+            <UserButton
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: "w-9 h-9"
+                }
+              }}
+            />
+          </div>
+        </SignedIn>
+      </nav>
     </header>
   )
 }

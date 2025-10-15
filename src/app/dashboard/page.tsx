@@ -7,6 +7,7 @@ import { CareerAssessmentEntity } from "@/entities/CareerAssessmentEntity";
 import { RoadmapEntity } from "@/entities/RoadmapEntity";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { TodoWidget } from "@/components/todos/TodoWidget";
 
 export default async function DashboardPage() {
   const { userId: clerkUserId } = await auth();
@@ -182,8 +183,8 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Recent Assessments & Roadmaps */}
-        <div className="grid gap-6 lg:grid-cols-2">
+        {/* Recent Assessments, Roadmaps & Todos */}
+        <div className="grid gap-6 lg:grid-cols-3">
           {/* Recent Assessments */}
           <Card>
             <CardHeader>
@@ -306,6 +307,9 @@ export default async function DashboardPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* My Todos */}
+          <TodoWidget />
         </div>
       </div>
     </div>

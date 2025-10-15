@@ -8,7 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, CheckCircle2, Clock, ExternalLink, Target, TrendingUp } from "lucide-react";
+import { Calendar, CheckCircle2, Clock, ExternalLink, Target, TrendingUp, ListTodo } from "lucide-react";
+import { toast } from "sonner";
 
 interface Task {
   id: string;
@@ -58,6 +59,7 @@ export default function RoadmapPage() {
   const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
+  const [convertingTask, setConvertingTask] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRoadmap();
@@ -126,6 +128,34 @@ export default function RoadmapPage() {
       }
     } catch (error) {
       console.error("Error saving notes:", error);
+    }
+  };
+
+  const convertToTodo = async (taskId: string) => {
+    setConvertingTask(taskId);
+    try {
+      const response = await fetch("/api/todos/from-roadmap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roadmapTaskId: taskId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success("Todo created successfully! View it in your Todos page.");
+        await fetchRoadmap(); // Refresh to reflect any state changes
+      } else if (response.status === 409) {
+        toast.info("A todo already exists for this task.");
+      } else {
+        throw new Error(data.error || "Failed to create todo");
+      }
+    } catch (error) {
+      console.error("Error converting to todo:", error);
+      const message = error instanceof Error ? error.message : "An unknown error occurred";
+      toast.error("Failed to create todo: " + message);
+    } finally {
+      setConvertingTask(null);
     }
   };
 
@@ -449,6 +479,22 @@ export default function RoadmapPage() {
                                       {task.notes || "No notes yet"}
                                     </p>
                                   )}
+                                </div>
+
+                                {/* Convert to Todo Button */}
+                                <div className="pt-2 border-t">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => convertToTodo(task.id)}
+                                    disabled={convertingTask === task.id}
+                                    className="w-full"
+                                  >
+                                    <ListTodo className="h-4 w-4 mr-2" />
+                                    {convertingTask === task.id
+                                      ? "Creating Todo..."
+                                      : "Convert to Personal Todo"}
+                                  </Button>
                                 </div>
                               </div>
                             )}

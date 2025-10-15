@@ -6,6 +6,8 @@ import { RoadmapEntity } from "@/entities/RoadmapEntity";
 import { RoadmapTaskEntity } from "@/entities/RoadmapTaskEntity";
 import { AICoachingPromptEntity } from "@/entities/AICoachingPromptEntity";
 import { BigFiveResultEntity } from "@/entities/BigFiveResultEntity";
+import { UserTodoEntity } from "@/entities/UserTodoEntity";
+import { TodoReminderEntity } from "@/entities/TodoReminderEntity";
 
 /**
  * Centralized TypeORM DataSource configuration
@@ -27,8 +29,10 @@ export const AppDataSource = new DataSource({
     CareerAssessmentEntity,
     RoadmapEntity,
     RoadmapTaskEntity,
-    AICoachingPromptEntity, // Keep existing entities
+    AICoachingPromptEntity,
     BigFiveResultEntity,
+    UserTodoEntity,
+    TodoReminderEntity,
   ],
   migrations: [],
   subscribers: [],

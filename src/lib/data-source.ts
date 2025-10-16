@@ -16,14 +16,17 @@ import { TodoReminderEntity } from "@/entities/TodoReminderEntity";
 let dataSourceInstance: DataSource | null = null;
 
 function getDataSourceConfig() {
+  const isProduction = process.env.NODE_ENV === 'production';
+
   return {
     type: "postgres" as const,
     url: process.env.DATABASE_URL,
     ssl: {
       rejectUnauthorized: false, // Required for NeonDB
     },
-    synchronize: true, // Auto-creates/updates tables (disable in production, use migrations)
-    logging: false, // Set to true for debugging SQL queries
+    // Use synchronize in development for convenience, migrations in production
+    synchronize: !isProduction,
+    logging: process.env.DATABASE_LOGGING === 'true',
     entities: [
       UserEntity,
       CareerRoleEntity,
@@ -35,6 +38,13 @@ function getDataSourceConfig() {
     ],
     migrations: [],
     subscribers: [],
+    // Connection pool settings for serverless
+    extra: {
+      max: 10, // Maximum number of clients in the pool
+      min: 2,  // Minimum number of clients in the pool
+      idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+      connectionTimeoutMillis: 10000, // Return an error after 10 seconds if connection cannot be established
+    },
   };
 }
 

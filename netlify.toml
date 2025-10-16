@@ -1,0 +1,62 @@
+# Netlify configuration for Next.js 14 deployment
+
+[build]
+  # Build command for Next.js
+  command = "npm run build"
+
+  # Output directory for Next.js builds
+  publish = ".next"
+
+  # Node version to use during build
+  [build.environment]
+    NODE_VERSION = "20"
+    NPM_FLAGS = "--legacy-peer-deps"
+
+# Next.js runtime configuration for Netlify
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Headers for security and performance
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# Redirects for cleaner URLs (optional)
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = false
+
+# Ensure webhooks work correctly
+[[redirects]]
+  from = "/api/webhooks/*"
+  to = "/.netlify/functions/api/webhooks/:splat"
+  status = 200
+  force = false
+
+# Build context - production
+[context.production]
+  command = "npm run build"
+
+[context.production.environment]
+  NEXT_RUNTIME = "netlify"
+
+# Build context - deploy previews
+[context.deploy-preview]
+  command = "npm run build"
+
+# Build context - branch deploys
+[context.branch-deploy]
+  command = "npm run build"
+
+# Functions configuration
+[functions]
+  # Increase function timeout for database operations
+  node_bundler = "esbuild"
+  external_node_modules = ["typeorm", "pg", "pg-native", "sqlite3"]
+  included_files = ["src/entities/**", "src/migrations/**"]

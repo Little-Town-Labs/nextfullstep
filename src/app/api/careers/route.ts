@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRepository } from "@/lib/data-source";
 import { CareerRoleEntity } from "@/entities/CareerRoleEntity";
 
+
 /**
  * API route for career roles
  *

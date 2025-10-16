@@ -1,11 +1,4 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import { initializeDatabase } from '@/lib/data-source';
-
-// Initialize database connection once at startup
-// This is safe because middleware runs once when the server starts
-initializeDatabase().catch((error) => {
-  console.error('Failed to initialize database at startup:', error);
-});
 
 // Define public routes that don't require authentication
 const isPublicRoute = createRouteMatcher([

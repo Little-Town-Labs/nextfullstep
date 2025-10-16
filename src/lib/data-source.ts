@@ -15,27 +15,51 @@ import { TodoReminderEntity } from "@/entities/TodoReminderEntity";
  *
  * Now using NeonDB PostgreSQL instead of SQLite
  */
-export const AppDataSource = new DataSource({
-  type: "postgres",
-  url: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false, // Required for NeonDB
-  },
-  synchronize: true, // Auto-creates/updates tables (disable in production, use migrations)
-  logging: false, // Set to true for debugging SQL queries
-  entities: [
-    UserEntity,
-    CareerRoleEntity,
-    CareerAssessmentEntity,
-    RoadmapEntity,
-    RoadmapTaskEntity,
-    AICoachingPromptEntity,
-    BigFiveResultEntity,
-    UserTodoEntity,
-    TodoReminderEntity,
-  ],
-  migrations: [],
-  subscribers: [],
+let dataSourceInstance: DataSource | null = null;
+
+function getDataSourceConfig() {
+  return {
+    type: "postgres" as const,
+    url: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false, // Required for NeonDB
+    },
+    synchronize: true, // Auto-creates/updates tables (disable in production, use migrations)
+    logging: false, // Set to true for debugging SQL queries
+    entities: [
+      UserEntity,
+      CareerRoleEntity,
+      CareerAssessmentEntity,
+      RoadmapEntity,
+      RoadmapTaskEntity,
+      AICoachingPromptEntity,
+      BigFiveResultEntity,
+      UserTodoEntity,
+      TodoReminderEntity,
+    ],
+    migrations: [],
+    subscribers: [],
+  };
+}
+
+function getAppDataSource(): DataSource {
+  if (!dataSourceInstance) {
+    dataSourceInstance = new DataSource(getDataSourceConfig());
+  }
+  return dataSourceInstance;
+}
+
+// Export a getter for AppDataSource
+export const AppDataSource = new Proxy({} as DataSource, {
+  get(_target, prop) {
+    const ds = getAppDataSource();
+    const value = (ds as any)[prop];
+    // Bind methods to the DataSource instance
+    if (typeof value === 'function') {
+      return value.bind(ds);
+    }
+    return value;
+  }
 });
 
 // Singleton initialization promise to prevent concurrent initialization
@@ -47,9 +71,11 @@ let initializationPromise: Promise<DataSource> | null = null;
  * Returns the same promise if initialization is already in progress
  */
 export async function initializeDatabase(): Promise<DataSource> {
+  const ds = getAppDataSource();
+
   // If already initialized, return immediately
-  if (AppDataSource.isInitialized) {
-    return AppDataSource;
+  if (ds.isInitialized) {
+    return ds;
   }
 
   // If initialization is in progress, return the existing promise
@@ -58,10 +84,10 @@ export async function initializeDatabase(): Promise<DataSource> {
   }
 
   // Start initialization
-  initializationPromise = AppDataSource.initialize()
+  initializationPromise = ds.initialize()
     .then(() => {
       console.log("✅ Database connection initialized successfully");
-      return AppDataSource;
+      return ds;
     })
     .catch((error) => {
       console.error("❌ Database initialization failed:", error);
@@ -78,5 +104,5 @@ export async function initializeDatabase(): Promise<DataSource> {
  */
 export async function getRepository<T>(entity: new () => T) {
   await initializeDatabase();
-  return AppDataSource.getRepository(entity);
+  return getAppDataSource().getRepository(entity);
 }

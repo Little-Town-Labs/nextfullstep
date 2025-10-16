@@ -74,7 +74,7 @@ export default function CareerRoleCard({ role }: CareerRoleCardProps) {
             </span>
           </div>
         </div>
-        <Link href={`/assessment/${role.id}`}>
+        <Link href={`/assessment/start/${role.id}`}>
           <Button className="w-full bg-blue-600 hover:bg-blue-700">
             Start Assessment →
           </Button>

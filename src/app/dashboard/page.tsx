@@ -237,7 +237,7 @@ export default async function DashboardPage() {
                         href={
                           assessment.status === "completed"
                             ? `/assessment/${assessment.id}/results`
-                            : `/assessment/${assessment.roleId}`
+                            : `/assessment/start/${assessment.roleId}`
                         }
                       >
                         <Button variant="ghost" size="sm">

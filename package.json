@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:entities": "tsx src/scripts/test-todo-entities.ts"
+    "test:entities": "tsx src/scripts/test-todo-entities.ts",
+    "seed:models": "tsx src/scripts/seed-ai-models.ts",
+    "promote:admin": "tsx src/scripts/promote-admin.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.40",

@@ -65,6 +65,14 @@ export class UserEntity {
   @Column({ type: "varchar", length: 50, default: "active" })
   status!: string; // active, inactive, suspended
 
+  // Admin & Permissions
+  @Column({ type: "varchar", length: 20, default: "user" })
+  role!: string; // user, admin
+
+  @Column({ type: "boolean", default: false })
+  @Index()
+  isAdmin!: boolean; // Quick admin check
+
   @CreateDateColumn({ type: "timestamp" })
   createdAt!: Date;
 

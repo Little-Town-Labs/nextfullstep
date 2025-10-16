@@ -6,6 +6,8 @@ import { RoadmapEntity } from "@/entities/RoadmapEntity";
 import { RoadmapTaskEntity } from "@/entities/RoadmapTaskEntity";
 import { UserTodoEntity } from "@/entities/UserTodoEntity";
 import { TodoReminderEntity } from "@/entities/TodoReminderEntity";
+import { AIModelConfigEntity } from "@/entities/AIModelConfigEntity";
+import { AIUsageLogEntity } from "@/entities/AIUsageLogEntity";
 
 /**
  * Centralized TypeORM DataSource configuration
@@ -35,6 +37,8 @@ function getDataSourceConfig() {
       RoadmapTaskEntity,
       UserTodoEntity,
       TodoReminderEntity,
+      AIModelConfigEntity,
+      AIUsageLogEntity,
     ],
     migrations: [],
     subscribers: [],

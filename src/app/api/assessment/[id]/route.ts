@@ -144,7 +144,9 @@ export async function POST(
       responses.map((r: any) => ({
         question: r.question,
         answer: r.answer,
-      }))
+      })),
+      assessment.userId, // Pass userId for usage tracking
+      assessment.id // Pass assessmentId for usage tracking
     );
 
     // Parse verdict from analysis (basic extraction)

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { AppDataSource } from "@/lib/data-source";
+import { getRepository } from "@/lib/data-source";
 import { UserEntity } from "@/entities/UserEntity";
 
 /**
@@ -19,8 +19,8 @@ export async function POST(req: NextRequest) {
 
     const { selectedGoal } = await req.json();
 
-    // Database is already initialized in middleware at startup
-    const userRepository = AppDataSource.getRepository(UserEntity);
+    // Use singleton repository pattern for serverless
+    const userRepository = await getRepository(UserEntity);
 
     // Find user by Clerk ID
     const user = await userRepository.findOne({

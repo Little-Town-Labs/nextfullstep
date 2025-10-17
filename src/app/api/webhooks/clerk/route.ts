@@ -1,7 +1,7 @@
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { WebhookEvent } from '@clerk/nextjs/server';
-import { AppDataSource } from '@/lib/data-source';
+import { getRepository } from '@/lib/data-source';
 import { UserEntity } from '@/entities/UserEntity';
 
 export async function POST(req: Request) {
@@ -55,8 +55,8 @@ export async function POST(req: Request) {
     const { id, email_addresses, first_name, last_name, image_url } = evt.data;
 
     try {
-      // Database is already initialized in middleware at startup
-      const userRepository = AppDataSource.getRepository(UserEntity);
+      // Use singleton repository pattern for serverless
+      const userRepository = await getRepository(UserEntity);
 
       // Create new user in database
       const newUser = new UserEntity();
@@ -87,8 +87,8 @@ export async function POST(req: Request) {
     const { id, email_addresses, first_name, last_name, image_url } = evt.data;
 
     try {
-      // Database is already initialized in middleware at startup
-      const userRepository = AppDataSource.getRepository(UserEntity);
+      // Use singleton repository pattern for serverless
+      const userRepository = await getRepository(UserEntity);
       const user = await userRepository.findOne({ where: { clerkUserId: id } });
 
       if (user) {
@@ -109,8 +109,8 @@ export async function POST(req: Request) {
     const { id } = evt.data;
 
     try {
-      // Database is already initialized in middleware at startup
-      const userRepository = AppDataSource.getRepository(UserEntity);
+      // Use singleton repository pattern for serverless
+      const userRepository = await getRepository(UserEntity);
       const user = await userRepository.findOne({ where: { clerkUserId: id } });
 
       if (user) {

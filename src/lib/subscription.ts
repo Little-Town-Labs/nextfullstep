@@ -1,12 +1,12 @@
-import { AppDataSource } from './data-source';
+import { getRepository } from './data-source';
 import { UserEntity } from '@/entities/UserEntity';
 
 /**
  * Get user from database by Clerk ID
- * Database is already initialized in middleware at startup
+ * Uses singleton repository pattern for serverless
  */
 export async function getUserByClerkId(clerkUserId: string): Promise<UserEntity | null> {
-  const userRepository = AppDataSource.getRepository(UserEntity);
+  const userRepository = await getRepository(UserEntity);
   return await userRepository.findOne({ where: { clerkUserId } });
 }
 
@@ -29,7 +29,7 @@ export async function checkAssessmentLimit(clerkUserId: string): Promise<{
   if (user.usageResetAt && new Date() > user.usageResetAt) {
     user.assessmentsUsed = 0;
     user.usageResetAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-    const userRepository = AppDataSource.getRepository(UserEntity);
+    const userRepository = await getRepository(UserEntity);
     await userRepository.save(user);
   }
 
@@ -78,7 +78,7 @@ export async function incrementAssessmentUsage(clerkUserId: string): Promise<voi
   if (!user) return;
 
   user.assessmentsUsed += 1;
-  const userRepository = AppDataSource.getRepository(UserEntity);
+  const userRepository = await getRepository(UserEntity);
   await userRepository.save(user);
 }
 
@@ -90,7 +90,7 @@ export async function incrementRoadmapUsage(clerkUserId: string): Promise<void> 
   if (!user) return;
 
   user.roadmapsUsed += 1;
-  const userRepository = AppDataSource.getRepository(UserEntity);
+  const userRepository = await getRepository(UserEntity);
   await userRepository.save(user);
 }
 

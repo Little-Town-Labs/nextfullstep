@@ -82,3 +82,6 @@ logs
 tmp/
 temp/
 *.tmp
+
+# Documentation (internal notes)
+docs/*.md

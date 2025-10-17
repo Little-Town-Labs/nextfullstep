@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { initializeDatabase } from "@/lib/data-source";
+import { requireAdmin } from "@/lib/admin-guard";
 
 /**
  * API route to test NeonDB connection
  *
  * GET /api/test-db - Tests database connection and returns status
+ *
+ * SECURITY: Admin-only endpoint - exposes database information
  */
 export async function GET(req: NextRequest) {
+  // Require admin access
+  const { user, error } = await requireAdmin();
+  if (error) return error;
+
   try {
     const dataSource = await initializeDatabase();
 
@@ -18,8 +25,6 @@ export async function GET(req: NextRequest) {
       message: "✅ Connected to NeonDB successfully",
       connection: {
         type: "postgres",
-        database: "neondb",
-        host: "ep-red-cherry-a5g07x71-pooler.us-east-2.aws.neon.tech",
         isConnected: dataSource.isInitialized,
       },
       server: {

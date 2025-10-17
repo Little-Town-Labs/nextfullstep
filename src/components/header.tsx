@@ -3,8 +3,12 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
+import { checkIsAdmin } from '@/lib/admin-guard'
 
 export async function Header() {
+  // Check if current user is admin
+  const adminUser = await checkIsAdmin()
+
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between w-full h-16 px-4 border-b shrink-0 bg-white backdrop-blur-sm bg-white/90">
       <div className="flex items-center gap-4">
@@ -29,6 +33,15 @@ export async function Header() {
             Dashboard
           </Link>
         </SignedIn>
+
+        {adminUser && (
+          <Link
+            href="/admin"
+            className={cn(buttonVariants({ variant: 'ghost' }), "font-normal text-purple-600")}
+          >
+            Admin
+          </Link>
+        )}
 
         <Link
           href="/pricing"

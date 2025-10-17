@@ -7,7 +7,7 @@ import { UserEntity } from '@/entities/UserEntity';
  */
 export async function getUserByClerkId(clerkUserId: string): Promise<UserEntity | null> {
   const userRepository = await getRepository(UserEntity);
-  return await userRepository.findOne({ where: { clerkUserId } });
+  return await userRepository.findOne({ where: { clerkUserId } }) as UserEntity | null;
 }
 
 /**

@@ -11,6 +11,9 @@ import { calculateTodoStats } from "@/lib/todo-helpers";
  * GET /api/todos/stats - Get comprehensive statistics about user's todos
  */
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/todos/stats
  * Get statistics for the authenticated user's todos

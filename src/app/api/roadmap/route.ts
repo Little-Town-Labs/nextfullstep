@@ -11,6 +11,9 @@ import { RoadmapTaskEntity } from "@/entities/RoadmapTaskEntity";
  * GET /api/roadmap?assessmentId=X - Get roadmap by assessment
  */
 
+// Mark this route as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const searchParams = req.nextUrl.searchParams;

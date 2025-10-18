@@ -11,7 +11,7 @@ import { RoadmapTaskEntity } from "@/entities/RoadmapTaskEntity";
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId: clerkUserId } = await auth();
@@ -23,7 +23,7 @@ export async function DELETE(
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Get assessment and verify ownership
     const assessmentRepo = await getRepository(CareerAssessmentEntity);

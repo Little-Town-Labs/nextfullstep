@@ -21,10 +21,10 @@ import {
 // Save answer to question
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const { questionNumber, question, answer } = await req.json();
 
     if (questionNumber === undefined || !question || !answer) {
@@ -91,10 +91,10 @@ export async function PUT(
 // Complete assessment and get GPT analysis
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const assessmentRepo = await getRepository(CareerAssessmentEntity);
     const assessment = await assessmentRepo.findOne({ where: { id } });

@@ -91,7 +91,7 @@ export async function createAPIKey(
     expiresAt,
     description: params.description || null,
     createdByIpAddress: ipAddress,
-  });
+  }) as APIKeyEntity;
 
   await repo.save(apiKey);
 
@@ -130,7 +130,7 @@ export async function validateAPIKey(
     const apiKey = await repo.findOne({
       where: { keyHash: hash },
       relations: ["user"],
-    });
+    }) as APIKeyEntity | null;
 
     if (!apiKey) {
       return { valid: false, error: "Invalid API key" };
@@ -185,7 +185,7 @@ export async function revokeAPIKey(
   try {
     const repo = await getRepository(APIKeyEntity);
 
-    const apiKey = await repo.findOne({ where: { id: apiKeyId } });
+    const apiKey = await repo.findOne({ where: { id: apiKeyId } }) as APIKeyEntity | null;
 
     if (!apiKey) {
       return false;
@@ -228,7 +228,7 @@ export async function getUserAPIKeys(userId: string): Promise<APIKeyEntity[]> {
   return repo.find({
     where: { userId },
     order: { createdAt: "DESC" },
-  });
+  }) as Promise<APIKeyEntity[]>;
 }
 
 /**
@@ -240,7 +240,7 @@ export async function getAPIKeyById(id: string): Promise<APIKeyEntity | null> {
   return repo.findOne({
     where: { id },
     relations: ["user"],
-  });
+  }) as Promise<APIKeyEntity | null>;
 }
 
 /**

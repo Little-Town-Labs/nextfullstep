@@ -54,14 +54,14 @@ function getRateLimiter(
     console.warn("Using in-memory rate limiting - not suitable for production");
     rateLimiters[key] = new Ratelimit({
       redis: Redis.fromEnv(), // Will fail gracefully
-      limiter: Ratelimit.slidingWindow(config.requests, config.window),
+      limiter: Ratelimit.slidingWindow(config.requests, config.window as any),
       analytics: true,
       prefix: `ratelimit:${name}`,
     });
   } else {
     rateLimiters[key] = new Ratelimit({
       redis: redisClient,
-      limiter: Ratelimit.slidingWindow(config.requests, config.window),
+      limiter: Ratelimit.slidingWindow(config.requests, config.window as any),
       analytics: true,
       prefix: `ratelimit:${name}`,
     });

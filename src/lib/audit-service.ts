@@ -57,7 +57,7 @@ export async function createAuditLog(
     userAgent,
     resourceType: params.resourceType || null,
     resourceId: params.resourceId || null,
-  });
+  }) as AuditLogEntity;
 
   return await repo.save(auditLog);
 }
@@ -141,7 +141,7 @@ export async function getAuditLogs(
     .orderBy("audit.createdAt", "DESC")
     .skip(skip)
     .take(limit)
-    .getMany();
+    .getMany() as AuditLogEntity[];
 
   return {
     logs,
@@ -237,7 +237,7 @@ export async function getAuditLogStats(
     order: { createdAt: "DESC" },
     take: 10,
     relations: ["performedBy", "targetUser"],
-  });
+  }) as AuditLogEntity[];
 
   return {
     totalLogs,

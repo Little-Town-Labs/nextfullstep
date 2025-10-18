@@ -43,8 +43,8 @@ export async function analyzeCareerAssessment(
     const result = await generateText({
       model: getModel(modelId),
       messages: messages,
-      temperature: modelConfig?.temperature || 0.7,
-      maxTokens: modelConfig?.maxOutputTokens || 3000,
+      temperature: modelConfig?.temperature ? Number(modelConfig.temperature) : 0.7,
+      maxTokens: modelConfig?.maxOutputTokens ? Number(modelConfig.maxOutputTokens) : 3000,
     });
 
     // Calculate latency and cost

@@ -139,7 +139,7 @@ export default function AssessmentPage() {
     setIsAnalyzing(true);
 
     try {
-      const res = await fetch(`/api/assessment/${assessmentId}/complete`, {
+      const res = await fetch(`/api/assessment/${assessmentId}`, {
         method: "POST",
       });
 

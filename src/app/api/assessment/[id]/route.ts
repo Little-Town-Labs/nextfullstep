@@ -137,17 +137,32 @@ export async function POST(
 
     // Get GPT analysis
     console.log(`Analyzing assessment ${id} for role ${assessment.roleId}...`);
+    console.log(`Number of responses: ${responses.length}`);
 
-    const analysisText = await analyzeCareerAssessment(
-      assessment.roleId,
-      role.systemPrompt,
-      responses.map((r: any) => ({
-        question: r.question,
-        answer: r.answer,
-      })),
-      assessment.userId, // Pass userId for usage tracking
-      assessment.id // Pass assessmentId for usage tracking
-    );
+    let analysisText: string;
+    try {
+      analysisText = await analyzeCareerAssessment(
+        assessment.roleId,
+        role.systemPrompt,
+        responses.map((r: any) => ({
+          question: r.question,
+          answer: r.answer,
+        })),
+        assessment.userId, // Pass userId for usage tracking
+        assessment.id // Pass assessmentId for usage tracking
+      );
+      console.log(`AI analysis completed, length: ${analysisText.length} chars`);
+    } catch (aiError: any) {
+      console.error(`AI analysis failed:`, aiError);
+      return NextResponse.json(
+        {
+          error: "Failed to complete assessment",
+          message: `AI analysis error: ${aiError.message}`,
+          details: aiError.toString()
+        },
+        { status: 500 }
+      );
+    }
 
     // Parse verdict from analysis (basic extraction)
     // Look for qualification tier in the text

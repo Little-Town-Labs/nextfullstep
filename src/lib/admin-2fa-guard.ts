@@ -36,7 +36,7 @@ export async function requireAdmin2FA(): Promise<Admin2FACheckResult> {
   const userRepo = await getRepository(UserEntity);
   const user = await userRepo.findOne({
     where: { clerkUserId: userId },
-  });
+  }) as UserEntity | null;
 
   if (!user) {
     return {

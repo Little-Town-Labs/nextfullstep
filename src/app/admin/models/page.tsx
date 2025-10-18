@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, X, Settings, Trash2, RefreshCw, Plus } from "lucide-react";
+import { Check, X, Settings, Trash2, RefreshCw, Plus, Search } from "lucide-react";
+import Link from "next/link";
 
 /**
  * AI Models Management Page
@@ -30,6 +31,7 @@ export default function AIModelsPage() {
   const [models, setModels] = useState<AIModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [seeding, setSeeding] = useState(false);
 
   // Fetch models
   const fetchModels = async () => {
@@ -113,6 +115,33 @@ export default function AIModelsPage() {
     }
   };
 
+  // Seed models
+  const seedModels = async () => {
+    if (!confirm("This will populate the database with predefined AI models from OpenRouter. Continue?")) {
+      return;
+    }
+
+    try {
+      setSeeding(true);
+      const response = await fetch("/api/admin/models/seed", {
+        method: "POST",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to seed models");
+      }
+
+      alert(`Success! Created ${data.summary.created} models, skipped ${data.summary.skipped} existing models.`);
+      await fetchModels();
+    } catch (err: any) {
+      alert(`Error: ${err.message}`);
+    } finally {
+      setSeeding(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -149,6 +178,20 @@ export default function AIModelsPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Link href="/admin/models/browse">
+            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+              <Search className="w-4 h-4" />
+              Browse Models
+            </button>
+          </Link>
+          <button
+            onClick={seedModels}
+            disabled={seeding}
+            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            {seeding ? "Seeding..." : "Quick Seed"}
+          </button>
           <button
             onClick={fetchModels}
             className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2"
@@ -195,9 +238,25 @@ export default function AIModelsPage() {
                   className="px-6 py-12 text-center text-gray-500"
                 >
                   <p className="text-lg mb-2">No AI models configured</p>
-                  <p className="text-sm text-gray-400">
-                    Run <code className="px-2 py-1 bg-gray-100 rounded">npm run seed:models</code> to add models
+                  <p className="text-sm text-gray-400 mb-4">
+                    Browse and select models from OpenRouter or use Quick Seed for defaults
                   </p>
+                  <div className="flex gap-2 justify-center">
+                    <Link href="/admin/models/browse">
+                      <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 inline-flex items-center gap-2">
+                        <Search className="w-4 h-4" />
+                        Browse All Models
+                      </button>
+                    </Link>
+                    <button
+                      onClick={seedModels}
+                      disabled={seeding}
+                      className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      {seeding ? "Seeding..." : "Quick Seed (7 Models)"}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -293,10 +352,18 @@ export default function AIModelsPage() {
       <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <h3 className="font-medium text-blue-900 mb-2">Getting Started</h3>
         <ul className="text-sm text-blue-800 space-y-1">
-          <li>1. Run <code className="px-1 py-0.5 bg-blue-100 rounded">npm run seed:models</code> to populate models</li>
-          <li>2. Enable/disable models as needed</li>
-          <li>3. Set a default model for new assessments</li>
-          <li>4. Models are fetched from OpenRouter automatically</li>
+          <li>
+            <strong>Browse Models:</strong> Search and select from 100+ OpenRouter models
+          </li>
+          <li>
+            <strong>Quick Seed:</strong> Instantly add 7 popular models (GPT-4, Claude, Gemini, etc.)
+          </li>
+          <li>
+            <strong>Manage:</strong> Enable/disable models and set a default for assessments
+          </li>
+          <li>
+            <strong>Track:</strong> Monitor usage and costs automatically
+          </li>
         </ul>
       </div>
     </div>

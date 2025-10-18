@@ -129,8 +129,21 @@ export async function POST(
       : [];
 
     if (responses.length < 8) {
+      const answeredQuestions = responses.map((r: any) => r.questionNumber).sort();
+      const missingQuestions = [];
+      for (let i = 1; i <= 8; i++) {
+        if (!answeredQuestions.includes(i)) {
+          missingQuestions.push(i);
+        }
+      }
+
       return NextResponse.json(
-        { error: "Not all questions answered (need 8)" },
+        {
+          error: "Not all questions answered",
+          message: `You've answered ${responses.length} out of 8 questions. Missing questions: ${missingQuestions.join(', ')}`,
+          answeredQuestions,
+          missingQuestions
+        },
         { status: 400 }
       );
     }

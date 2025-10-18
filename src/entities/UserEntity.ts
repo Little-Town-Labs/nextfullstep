@@ -27,39 +27,39 @@ export class UserEntity {
   currentLocation?: string; // City/region for salary calibration
 
   // Career Profile (From Onboarding)
-  @Column({ type: "varchar", length: 50, nullable: true })
+  @Column({ type: "varchar", length: 50, nullable: true, name: "experience_level" })
   experienceLevel?: string; // beginner, some-experience, intermediate, advanced
 
-  @Column({ type: "varchar", length: 50, nullable: true })
+  @Column({ type: "varchar", length: 50, nullable: true, name: "time_commitment" })
   timeCommitment?: string; // casual, parttime, serious, fulltime
 
   // Career Readiness (From Landing Page Assessment)
-  @Column({ type: "int", nullable: true })
+  @Column({ type: "int", nullable: true, name: "career_readiness_score" })
   @Index()
   careerReadinessScore?: number; // 0-100 from landing page assessment
 
-  @Column({ type: "varchar", length: 20, nullable: true })
+  @Column({ type: "varchar", length: 20, nullable: true, name: "qualification_tier" })
   qualificationTier?: string; // cold, warm, hot, qualified - for sales prioritization
 
-  @Column({ type: "varchar", length: 100, nullable: true })
+  @Column({ type: "varchar", length: 100, nullable: true, name: "current_situation" })
   currentSituation?: string; // student, early_career, mid_career, senior, career_break, entrepreneur
 
-  @Column({ type: "varchar", length: 100, nullable: true })
+  @Column({ type: "varchar", length: 100, nullable: true, name: "desired_outcome" })
   desiredOutcome?: string; // first_project, full_time_role, upskill, start_business, transition_role, exploring
 
   // Progress Tracking
-  @Column({ type: "int", default: 0 })
+  @Column({ type: "int", default: 0, name: "current_streak" })
   currentStreak?: number; // Days in a row working on roadmap
 
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ type: "timestamp", nullable: true, name: "last_active_date" })
   lastActiveDate?: Date; // Last time they engaged with platform
 
   // Attribution (Links to Landing Page Assessment)
-  @Column({ type: "uuid", nullable: true })
+  @Column({ type: "uuid", nullable: true, name: "linked_assessment_lead_id" })
   @Index()
   linkedAssessmentLeadId?: string; // Links to AssessmentLeadEntity if they came from landing page
 
-  @Column({ type: "varchar", length: 100, nullable: true })
+  @Column({ type: "varchar", length: 100, nullable: true, name: "acquisition_channel" })
   acquisitionChannel?: string; // organic, landing_page_assessment, direct_signup
 
   // Subscription Management

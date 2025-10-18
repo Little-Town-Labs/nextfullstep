@@ -177,12 +177,16 @@ export default function AssessmentPage() {
         // Redirect to results page
         router.push(`/assessment/${assessmentId}/results`);
       } else {
-        alert("Failed to complete assessment: " + data.error);
+        // Show detailed error message
+        const errorMsg = data.message || data.error || "Unknown error";
+        const errorDetails = data.details ? `\n\nDetails: ${data.details}` : "";
+        console.error("Assessment completion failed:", data);
+        alert(`Failed to complete assessment: ${errorMsg}${errorDetails}`);
         setIsAnalyzing(false);
       }
     } catch (error) {
       console.error("Error completing assessment:", error);
-      alert("Failed to complete assessment. Please try again.");
+      alert(`Failed to complete assessment. Please try again.\n\nError: ${error}`);
       setIsAnalyzing(false);
     }
   };

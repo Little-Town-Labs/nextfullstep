@@ -2,12 +2,16 @@ import * as React from 'react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '@/components/ui/button'
-import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
+import { SignInButton, SignedIn, SignedOut, UserButton, auth } from '@clerk/nextjs/server'
 import { checkIsAdmin } from '@/lib/admin-guard'
+import { MobileNav } from '@/components/navigation/MobileNav'
+import { QuickLinksDropdown } from '@/components/navigation/QuickLinksDropdown'
 
 export async function Header() {
   // Check if current user is admin
   const adminUser = await checkIsAdmin()
+  const { userId } = await auth()
+  const isSignedIn = !!userId
 
   return (
     <header className="sticky top-0 z-50 flex items-center justify-between w-full h-16 px-4 border-b shrink-0 bg-white backdrop-blur-sm bg-white/90">
@@ -17,7 +21,8 @@ export async function Header() {
         </Link>
       </div>
 
-      <nav className="flex items-center gap-1">
+      {/* Desktop Navigation */}
+      <nav className="hidden md:flex items-center gap-1">
         <Link
           href="/careers"
           className={cn(buttonVariants({ variant: 'ghost' }), "font-normal")}
@@ -26,12 +31,7 @@ export async function Header() {
         </Link>
 
         <SignedIn>
-          <Link
-            href="/dashboard"
-            className={cn(buttonVariants({ variant: 'ghost' }), "font-normal")}
-          >
-            Dashboard
-          </Link>
+          <QuickLinksDropdown />
         </SignedIn>
 
         {adminUser && (
@@ -77,6 +77,21 @@ export async function Header() {
           </div>
         </SignedIn>
       </nav>
+
+      {/* Mobile Navigation */}
+      <div className="flex md:hidden items-center gap-2">
+        <SignedIn>
+          <UserButton
+            afterSignOutUrl="/"
+            appearance={{
+              elements: {
+                avatarBox: "w-9 h-9"
+              }
+            }}
+          />
+        </SignedIn>
+        <MobileNav isAdmin={!!adminUser} isSignedIn={isSignedIn} />
+      </div>
     </header>
   )
 }

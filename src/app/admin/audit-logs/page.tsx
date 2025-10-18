@@ -51,10 +51,6 @@ export default function AuditLogsPage() {
     search: "",
   });
 
-  useEffect(() => {
-    fetchLogs();
-  }, [page, filters]);
-
   const fetchLogs = async () => {
     setLoading(true);
     try {
@@ -78,6 +74,11 @@ export default function AuditLogsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchLogs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, filters]);
 
   const getSeverityColor = (severity: string) => {
     switch (severity.toLowerCase()) {

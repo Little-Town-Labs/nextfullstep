@@ -41,7 +41,7 @@ function getRateLimiter(
     window: string; // e.g., "1m", "1h", "1d"
   }
 ): Ratelimit {
-  const key = \`\${name}:\${config.requests}:\${config.window}\`;
+  const key = `${name}:${config.requests}:${config.window}`;
 
   if (rateLimiters[key]) {
     return rateLimiters[key];
@@ -56,14 +56,14 @@ function getRateLimiter(
       redis: Redis.fromEnv(), // Will fail gracefully
       limiter: Ratelimit.slidingWindow(config.requests, config.window),
       analytics: true,
-      prefix: \`ratelimit:\${name}\`,
+      prefix: `ratelimit:${name}`,
     });
   } else {
     rateLimiters[key] = new Ratelimit({
       redis: redisClient,
       limiter: Ratelimit.slidingWindow(config.requests, config.window),
       analytics: true,
-      prefix: \`ratelimit:\${name}\`,
+      prefix: `ratelimit:${name}`,
     });
   }
 
@@ -115,7 +115,7 @@ export async function rateLimitAPI(userId?: string | null): Promise<{
       await logSecurityEvent({
         action: AuditAction.RATE_LIMIT_EXCEEDED,
         userId: type === "user" ? identifier : undefined,
-        description: \`Rate limit exceeded for \${type}: \${identifier}\`,
+        description: `Rate limit exceeded for ${type}: ${identifier}`,
         severity: AuditSeverity.WARNING,
         metadata: {
           identifier,
@@ -156,7 +156,7 @@ export async function rateLimitAuth(identifier: string): Promise<{
     if (!success) {
       await logSecurityEvent({
         action: AuditAction.RATE_LIMIT_EXCEEDED,
-        description: \`Auth rate limit exceeded for: \${identifier}\`,
+        description: `Auth rate limit exceeded for: ${identifier}`,
         severity: AuditSeverity.WARNING,
         metadata: {
           identifier,
@@ -197,7 +197,7 @@ export async function rateLimitAdmin(userId: string): Promise<{
       await logSecurityEvent({
         action: AuditAction.RATE_LIMIT_EXCEEDED,
         userId,
-        description: \`Admin rate limit exceeded for user: \${userId}\`,
+        description: `Admin rate limit exceeded for user: ${userId}`,
         severity: AuditSeverity.WARNING,
         metadata: {
           userId,
@@ -230,7 +230,7 @@ export async function resetRateLimit(
       return false;
     }
 
-    await redisClient.del(\`ratelimit:\${name}:\${identifier}\`);
+    await redisClient.del(`ratelimit:${name}:${identifier}`);
     return true;
   } catch (error) {
     console.error("Failed to reset rate limit:", error);

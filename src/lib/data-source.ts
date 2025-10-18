@@ -10,6 +10,9 @@ import { AIModelConfigEntity } from "@/entities/AIModelConfigEntity";
 import { AIUsageLogEntity } from "@/entities/AIUsageLogEntity";
 import { AuditLogEntity } from "@/entities/AuditLogEntity";
 import { APIKeyEntity } from "@/entities/APIKeyEntity";
+import { AICoachingPromptEntity } from "@/entities/AICoachingPromptEntity";
+import { DevelopmentPlanEntity } from "@/entities/DevelopmentPlanEntity";
+import { QuarterlyReviewEntity } from "@/entities/QuarterlyReviewEntity";
 
 /**
  * Centralized TypeORM DataSource configuration
@@ -43,6 +46,9 @@ function getDataSourceConfig() {
       AIUsageLogEntity,
       AuditLogEntity,
       APIKeyEntity,
+      AICoachingPromptEntity,
+      DevelopmentPlanEntity,
+      QuarterlyReviewEntity,
     ],
     migrations: [],
     subscribers: [],

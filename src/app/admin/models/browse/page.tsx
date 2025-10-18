@@ -150,11 +150,19 @@ export default function BrowseModelsPage() {
         selectedModels.has(model.id)
       );
 
-      const response = await fetch("/api/admin/models/add-selected", {
+      const response = await fetch("/api/admin/models/bulk-add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ models: selectedModelData }),
       });
+
+      // Check if response is JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Non-JSON response received:", text.substring(0, 500));
+        throw new Error(`Server returned ${response.status}: Expected JSON but got ${contentType}. Check server logs.`);
+      }
 
       const data = await response.json();
 

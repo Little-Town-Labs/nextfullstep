@@ -9,17 +9,17 @@ import { AuditAction } from "@/entities/AuditLogEntity";
  * API route to add selected models from OpenRouter
  *
  * Usage:
- * POST /api/admin/models/add-selected
+ * POST /api/admin/models/bulk-add
  * Body: { models: Array<{ id, name, description, pricing, context_length }> }
  *
  * SECURITY: Admin-only endpoint
  */
 export async function POST(req: NextRequest) {
-  // Require admin access
-  const { user, error } = await requireAdmin();
-  if (error) return error;
-
   try {
+    // Require admin access
+    const { user, error } = await requireAdmin();
+    if (error) return error;
+
     const body = await req.json();
     console.log("Received request to add models:", {
       modelCount: body.models?.length,
@@ -162,14 +162,19 @@ export async function POST(req: NextRequest) {
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error: any) {
-    console.error("Error adding selected models:", error);
-    console.error("Error stack:", error.stack);
+    console.error("=== Error adding selected models ===");
+    console.error("Error:", error);
+    console.error("Error message:", error?.message);
+    console.error("Error stack:", error?.stack);
+    console.error("Error name:", error?.name);
+
     return NextResponse.json(
       {
         success: false,
         error: "Failed to add selected models",
-        message: error.message,
-        details: process.env.NODE_ENV === "development" ? error.stack : undefined,
+        message: error?.message || "Unknown error occurred",
+        errorType: error?.name || "Error",
+        details: error?.stack || "No stack trace available",
       },
       { status: 500 }
     );

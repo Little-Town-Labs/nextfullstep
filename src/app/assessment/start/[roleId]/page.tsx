@@ -68,9 +68,16 @@ export default function AssessmentPage() {
 
         if (assessmentData.success) {
           setAssessmentId(assessmentData.assessment.id);
-          setCurrentQuestion(
-            assessmentData.assessment.currentQuestionNumber || 0
-          );
+
+          // Safety check: ensure currentQuestionNumber is within valid range
+          let questionIndex = assessmentData.assessment.currentQuestionNumber || 0;
+          if (questionIndex >= questions.length) {
+            questionIndex = questions.length - 1; // Reset to last question
+          }
+          if (questionIndex < 0) {
+            questionIndex = 0;
+          }
+          setCurrentQuestion(questionIndex);
 
           // Restore previous responses
           if (assessmentData.assessment.responses?.length > 0) {
@@ -253,31 +260,6 @@ export default function AssessmentPage() {
 
   const question = questions[currentQuestion];
   const progress = ((currentQuestion + 1) / questions.length) * 100;
-
-  // Safety check - if question is undefined, show debugging info
-  if (!question) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4">
-        <Card className="p-8 max-w-md text-center">
-          <div className="text-yellow-600 text-5xl mb-4">🔍</div>
-          <h2 className="text-xl font-bold text-gray-900 mb-4">
-            Debug Information
-          </h2>
-          <div className="text-left text-sm space-y-2 mb-6">
-            <p><strong>Role ID:</strong> {roleId}</p>
-            <p><strong>Questions Length:</strong> {questions.length}</p>
-            <p><strong>Current Question Index:</strong> {currentQuestion}</p>
-            <p><strong>Assessment ID:</strong> {assessmentId || "Not set"}</p>
-            <p><strong>Loading:</strong> {loading.toString()}</p>
-            <p><strong>Questions Available:</strong> {questions.length > 0 ? "Yes" : "No"}</p>
-          </div>
-          <Button onClick={() => window.location.reload()}>
-            Reload Page
-          </Button>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-8 px-4">

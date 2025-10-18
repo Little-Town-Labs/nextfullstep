@@ -165,6 +165,32 @@ export async function POST(
         assessment.id // Pass assessmentId for usage tracking
       );
       console.log(`AI analysis completed, length: ${analysisText.length} chars`);
+
+      // Validate that we got a non-empty response
+      if (!analysisText || analysisText.trim().length === 0) {
+        console.error('AI returned empty response');
+        return NextResponse.json(
+          {
+            error: "Failed to complete assessment",
+            message: "AI analysis returned an empty response. Please try again.",
+          },
+          { status: 500 }
+        );
+      }
+
+      // Validate minimum response length (should be at least 100 chars for a real analysis)
+      if (analysisText.length < 100) {
+        console.error(`AI response too short: ${analysisText.length} chars`);
+        console.error(`Response content: ${analysisText}`);
+        return NextResponse.json(
+          {
+            error: "Failed to complete assessment",
+            message: "AI analysis response was too short. This may indicate an error. Please try again.",
+          },
+          { status: 500 }
+        );
+      }
+
     } catch (aiError: any) {
       console.error(`AI analysis failed:`, aiError);
       return NextResponse.json(
@@ -182,6 +208,8 @@ export async function POST(
     let verdictTier = "UNKNOWN";
     let verdictScore = 50;
     let verdictTimeline = "Unknown";
+
+    console.log(`Parsing verdict from analysis text (first 200 chars): ${analysisText.substring(0, 200)}`);
 
     if (analysisText.includes("QUALIFIED NOW") || analysisText.includes("✅")) {
       verdictTier = "QUALIFIED_NOW";
@@ -210,10 +238,14 @@ export async function POST(
       verdictTimeline = "6-12 months";
     }
 
+    console.log(`Parsed verdict tier: ${verdictTier}, score: ${verdictScore}`);
+
     // Extract structured data from GPT analysis
+    console.log('Extracting strengths, gaps, and roadmap from analysis...');
     const strengths = extractStrengthsFromAnalysis(analysisText);
     const gaps = extractGapsFromAnalysis(analysisText);
     const parsedRoadmap = parseRoadmapFromAnalysis(analysisText);
+    console.log(`Extracted: ${strengths.length} strengths, ${gaps.length} gaps, ${parsedRoadmap.totalTasks} tasks`);
 
     // Update assessment with results
     assessment.status = "completed";
@@ -228,9 +260,23 @@ export async function POST(
       parsedRoadmap.phases.flatMap((p) => p.tasks.map((t) => t.title))
     );
 
+    // Final validation before saving
+    if (!assessment.fullAnalysis || assessment.fullAnalysis.length === 0) {
+      console.error('ERROR: fullAnalysis is empty before saving!');
+      return NextResponse.json(
+        {
+          error: "Failed to save assessment",
+          message: "Analysis data was lost. This is a system error. Please contact support.",
+        },
+        { status: 500 }
+      );
+    }
+
+    console.log(`Saving assessment ${id} with verdict: ${verdictTier}, analysis length: ${assessment.fullAnalysis.length}`);
+
     await assessmentRepo.save(assessment);
 
-    console.log(`Assessment ${id} completed with verdict: ${verdictTier}`);
+    console.log(`Assessment ${id} saved successfully`);
 
     // Create roadmap entity
     const roadmapRepo = await getRepository(RoadmapEntity);

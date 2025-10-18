@@ -48,8 +48,8 @@ export function TwoFactorAuthWarningBanner() {
   };
 
   const handleEnable2FA = () => {
-    // Redirect to Clerk user profile page to enable 2FA
-    window.location.href = "/user-profile#security";
+    // Redirect to settings page where Clerk UserProfile component is available
+    window.location.href = "/dashboard/settings";
   };
 
   // Don't show if loading, dismissed, or 2FA is already enabled

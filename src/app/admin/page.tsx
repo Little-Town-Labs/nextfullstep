@@ -3,7 +3,7 @@ import { UserEntity } from "@/entities/UserEntity";
 import { AIModelConfigEntity } from "@/entities/AIModelConfigEntity";
 import { AIUsageLogEntity } from "@/entities/AIUsageLogEntity";
 import { Activity, Users, Cpu, DollarSign } from "lucide-react";
-import { TwoFactorAuthWarningBanner } from "@/components/admin/2FAWarningBanner";
+// import { TwoFactorAuthWarningBanner } from "@/components/admin/2FAWarningBanner"; // Disabled - requires paid Clerk plan
 
 /**
  * Admin Dashboard
@@ -86,8 +86,8 @@ export default async function AdminDashboard() {
         </p>
       </div>
 
-      {/* 2FA Warning Banner */}
-      <TwoFactorAuthWarningBanner />
+      {/* 2FA Warning Banner - Disabled (requires paid Clerk plan) */}
+      {/* <TwoFactorAuthWarningBanner /> */}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -2,7 +2,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getUserByClerkId } from "@/lib/subscription";
-import { AppDataSource } from "@/lib/data-source";
+import { getRepository } from "@/lib/data-source";
 import { CareerAssessmentEntity } from "@/entities/CareerAssessmentEntity";
 import { RoadmapEntity } from "@/entities/RoadmapEntity";
 import { Button } from "@/components/ui/button";
@@ -38,8 +38,7 @@ export default async function DashboardPage() {
   }
 
   // Fetch user's assessments
-  // Database is already initialized in middleware at startup
-  const assessmentRepo = AppDataSource.getRepository(CareerAssessmentEntity);
+  const assessmentRepo = await getRepository(CareerAssessmentEntity);
 
   // Get recent assessments for display
   const assessments = await assessmentRepo.find({
@@ -53,7 +52,7 @@ export default async function DashboardPage() {
     where: { userId: clerkUserId, status: "completed" }
   });
 
-  const roadmapRepo = AppDataSource.getRepository(RoadmapEntity);
+  const roadmapRepo = await getRepository(RoadmapEntity);
   const roadmaps = await roadmapRepo.find({
     where: { userId: clerkUserId },
     order: { createdAt: "DESC" },

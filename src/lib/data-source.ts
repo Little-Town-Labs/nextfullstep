@@ -8,6 +8,8 @@ import { UserTodoEntity } from "@/entities/UserTodoEntity";
 import { TodoReminderEntity } from "@/entities/TodoReminderEntity";
 import { AIModelConfigEntity } from "@/entities/AIModelConfigEntity";
 import { AIUsageLogEntity } from "@/entities/AIUsageLogEntity";
+import { AuditLogEntity } from "@/entities/AuditLogEntity";
+import { APIKeyEntity } from "@/entities/APIKeyEntity";
 
 /**
  * Centralized TypeORM DataSource configuration
@@ -39,6 +41,8 @@ function getDataSourceConfig() {
       TodoReminderEntity,
       AIModelConfigEntity,
       AIUsageLogEntity,
+      AuditLogEntity,
+      APIKeyEntity,
     ],
     migrations: [],
     subscribers: [],

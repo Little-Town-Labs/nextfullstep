@@ -6,6 +6,8 @@ import {
   deleteModel,
   toggleModelEnabled,
 } from "@/lib/ai-model-service";
+import { createAuditLog } from "@/lib/audit-service";
+import { AuditAction } from "@/entities/AuditLogEntity";
 
 /**
  * Admin AI Model by ID API
@@ -80,6 +82,21 @@ export async function PUT(
         { status: 500 }
       );
     }
+
+    // Log audit event
+    await createAuditLog({
+      action: AuditAction.MODEL_UPDATE,
+      performedById: user!.id,
+      description: `Updated AI model: ${updatedModel.displayName} (${updatedModel.modelId})`,
+      metadata: {
+        modelId: updatedModel.id,
+        changes: body,
+        provider: updatedModel.provider,
+        displayName: updatedModel.displayName,
+      },
+      resourceType: "ai_model",
+      resourceId: updatedModel.id,
+    });
 
     return NextResponse.json({
       success: true,
@@ -167,6 +184,21 @@ export async function DELETE(
         { status: 500 }
       );
     }
+
+    // Log audit event
+    await createAuditLog({
+      action: AuditAction.MODEL_DELETE,
+      performedById: user!.id,
+      description: `Deleted AI model: ${existingModel.displayName} (${existingModel.modelId})`,
+      metadata: {
+        modelId: existingModel.id,
+        provider: existingModel.provider,
+        displayName: existingModel.displayName,
+        modelId_original: existingModel.modelId,
+      },
+      resourceType: "ai_model",
+      resourceId: id,
+    });
 
     return NextResponse.json({
       success: true,

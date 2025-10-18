@@ -6,6 +6,8 @@ import {
   clearModelCache,
 } from "@/lib/ai-model-service";
 import { AIModelConfigEntity } from "@/entities/AIModelConfigEntity";
+import { createAuditLog } from "@/lib/audit-service";
+import { AuditAction } from "@/entities/AuditLogEntity";
 
 /**
  * Admin AI Models API
@@ -93,6 +95,22 @@ export async function POST(req: NextRequest) {
     };
 
     const model = await createModel(modelData);
+
+    // Log audit event
+    await createAuditLog({
+      action: AuditAction.MODEL_CREATE,
+      performedById: user!.id,
+      description: `Created AI model: ${model.displayName} (${model.modelId})`,
+      metadata: {
+        modelId: model.id,
+        provider: model.provider,
+        displayName: model.displayName,
+        isEnabled: model.isEnabled,
+        isDefault: model.isDefault,
+      },
+      resourceType: "ai_model",
+      resourceId: model.id,
+    });
 
     return NextResponse.json({
       success: true,

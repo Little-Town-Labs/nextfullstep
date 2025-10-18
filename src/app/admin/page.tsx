@@ -3,6 +3,7 @@ import { UserEntity } from "@/entities/UserEntity";
 import { AIModelConfigEntity } from "@/entities/AIModelConfigEntity";
 import { AIUsageLogEntity } from "@/entities/AIUsageLogEntity";
 import { Activity, Users, Cpu, DollarSign } from "lucide-react";
+import { TwoFactorAuthWarningBanner } from "@/components/admin/2FAWarningBanner";
 
 /**
  * Admin Dashboard
@@ -84,6 +85,9 @@ export default async function AdminDashboard() {
           Overview of system statistics and activity
         </p>
       </div>
+
+      {/* 2FA Warning Banner */}
+      <TwoFactorAuthWarningBanner />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -204,7 +208,7 @@ export default async function AdminDashboard() {
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           Quick Actions
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <a
             href="/admin/models"
             className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
@@ -230,6 +234,15 @@ export default async function AdminDashboard() {
             <h3 className="font-medium text-gray-900">View Analytics</h3>
             <p className="mt-1 text-sm text-gray-600">
               Analyze usage and costs
+            </p>
+          </a>
+          <a
+            href="/admin/audit-logs"
+            className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <h3 className="font-medium text-gray-900">Audit Logs</h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Track admin actions and security events
             </p>
           </a>
         </div>

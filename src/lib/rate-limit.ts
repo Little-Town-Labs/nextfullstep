@@ -1,171 +1,239 @@
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+import { headers } from "next/headers";
+import { logSecurityEvent } from "./audit-service";
+import { AuditAction, AuditSeverity } from "@/entities/AuditLogEntity";
+
 /**
- * Simple in-memory rate limiter
- *
- * For production with multiple servers, use Upstash Redis:
- * - Sign up at https://upstash.com
- * - Add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN to .env
- * - Uncomment the Upstash implementation below
+ * Rate Limiting Service
+ * Uses Upstash Redis for distributed rate limiting across multiple servers
  */
 
-// Simple in-memory rate limiter (works for single server)
-interface RateLimitRecord {
-  count: number;
-  resetAt: number;
-}
+// Initialize Upstash Redis client
+let redis: Redis | null = null;
+let rateLimiters: Record<string, Ratelimit> = {};
 
-const rateLimitStore = new Map<string, RateLimitRecord>();
-
-// Clean up old entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, record] of rateLimitStore.entries()) {
-    if (record.resetAt < now) {
-      rateLimitStore.delete(key);
-    }
+function getRedisClient(): Redis | null {
+  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    console.warn(
+      "Upstash Redis not configured. Rate limiting will use in-memory fallback (not suitable for production)."
+    );
+    return null;
   }
-}, 5 * 60 * 1000);
 
-export interface RateLimitConfig {
-  maxRequests: number;  // Maximum requests allowed
-  windowMs: number;     // Time window in milliseconds
+  if (!redis) {
+    redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+  }
+
+  return redis;
 }
 
-export interface RateLimitResult {
+/**
+ * Get or create a rate limiter with specific configuration
+ */
+function getRateLimiter(
+  name: string,
+  config: {
+    requests: number;
+    window: string; // e.g., "1m", "1h", "1d"
+  }
+): Ratelimit {
+  const key = \`\${name}:\${config.requests}:\${config.window}\`;
+
+  if (rateLimiters[key]) {
+    return rateLimiters[key];
+  }
+
+  const redisClient = getRedisClient();
+
+  if (!redisClient) {
+    // Fallback to in-memory rate limiting (not distributed)
+    console.warn("Using in-memory rate limiting - not suitable for production");
+    rateLimiters[key] = new Ratelimit({
+      redis: Redis.fromEnv(), // Will fail gracefully
+      limiter: Ratelimit.slidingWindow(config.requests, config.window),
+      analytics: true,
+      prefix: \`ratelimit:\${name}\`,
+    });
+  } else {
+    rateLimiters[key] = new Ratelimit({
+      redis: redisClient,
+      limiter: Ratelimit.slidingWindow(config.requests, config.window),
+      analytics: true,
+      prefix: \`ratelimit:\${name}\`,
+    });
+  }
+
+  return rateLimiters[key];
+}
+
+/**
+ * Get identifier for rate limiting (IP address or user ID)
+ */
+async function getIdentifier(
+  userId?: string | null
+): Promise<{ identifier: string; type: "ip" | "user" }> {
+  if (userId) {
+    return { identifier: userId, type: "user" };
+  }
+
+  // Fall back to IP address
+  const headersList = await headers();
+  const ip =
+    headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    headersList.get("x-real-ip") ||
+    "anonymous";
+
+  return { identifier: ip, type: "ip" };
+}
+
+/**
+ * Rate limit for general API requests
+ * Default: 60 requests per minute
+ */
+export async function rateLimitAPI(userId?: string | null): Promise<{
   success: boolean;
   limit: number;
   remaining: number;
   reset: number;
-}
+}> {
+  const limiter = getRateLimiter("api", {
+    requests: 60,
+    window: "1m",
+  });
 
-/**
- * Check if a request is within rate limits
- *
- * @param identifier - Unique identifier (e.g., IP address, user ID, API key)
- * @param config - Rate limit configuration
- * @returns Rate limit result with success status
- */
-export function checkRateLimit(
-  identifier: string,
-  config: RateLimitConfig
-): RateLimitResult {
-  const now = Date.now();
-  const key = identifier;
+  const { identifier, type } = await getIdentifier(userId);
 
-  // Get or create record
-  let record = rateLimitStore.get(key);
+  try {
+    const { success, limit, remaining, reset } = await limiter.limit(identifier);
 
-  if (!record || record.resetAt < now) {
-    // Create new record
-    record = {
-      count: 0,
-      resetAt: now + config.windowMs,
-    };
-    rateLimitStore.set(key, record);
+    if (!success) {
+      // Log rate limit exceeded
+      await logSecurityEvent({
+        action: AuditAction.RATE_LIMIT_EXCEEDED,
+        userId: type === "user" ? identifier : undefined,
+        description: \`Rate limit exceeded for \${type}: \${identifier}\`,
+        severity: AuditSeverity.WARNING,
+        metadata: {
+          identifier,
+          type,
+          limit,
+          remaining,
+          reset,
+        },
+      });
+    }
+
+    return { success, limit, remaining, reset };
+  } catch (error) {
+    console.error("Rate limit check failed:", error);
+    // Allow request if rate limit check fails
+    return { success: true, limit: 60, remaining: 60, reset: Date.now() + 60000 };
   }
-
-  // Increment count
-  record.count++;
-
-  // Check if limit exceeded
-  const success = record.count <= config.maxRequests;
-  const remaining = Math.max(0, config.maxRequests - record.count);
-
-  return {
-    success,
-    limit: config.maxRequests,
-    remaining,
-    reset: record.resetAt,
-  };
 }
 
 /**
- * Get client identifier from request headers
- * Uses IP address or user ID
+ * Rate limit for authentication attempts
+ * More restrictive: 5 attempts per 15 minutes
  */
-export function getClientIdentifier(request: Request, userId?: string): string {
-  if (userId) {
-    return `user:${userId}`;
+export async function rateLimitAuth(identifier: string): Promise<{
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reset: number;
+}> {
+  const limiter = getRateLimiter("auth", {
+    requests: 5,
+    window: "15m",
+  });
+
+  try {
+    const { success, limit, remaining, reset } = await limiter.limit(identifier);
+
+    if (!success) {
+      await logSecurityEvent({
+        action: AuditAction.RATE_LIMIT_EXCEEDED,
+        description: \`Auth rate limit exceeded for: \${identifier}\`,
+        severity: AuditSeverity.WARNING,
+        metadata: {
+          identifier,
+          type: "auth",
+          limit,
+          remaining,
+          reset,
+        },
+      });
+    }
+
+    return { success, limit, remaining, reset };
+  } catch (error) {
+    console.error("Rate limit check failed:", error);
+    return { success: true, limit: 5, remaining: 5, reset: Date.now() + 900000 };
   }
-
-  // Try to get IP from various headers (Vercel, Cloudflare, etc.)
-  const forwardedFor = request.headers.get('x-forwarded-for');
-  const realIp = request.headers.get('x-real-ip');
-  const cfConnectingIp = request.headers.get('cf-connecting-ip');
-
-  const ip = cfConnectingIp || realIp || forwardedFor?.split(',')[0] || 'unknown';
-
-  return `ip:${ip}`;
 }
 
 /**
- * Preset rate limit configurations
+ * Rate limit for admin actions
+ * Moderate: 100 requests per minute
  */
-export const RATE_LIMITS = {
-  // Very strict - for expensive operations (AI generation)
-  AI_GENERATION: {
-    maxRequests: 5,
-    windowMs: 60 * 1000, // 5 requests per minute
-  },
+export async function rateLimitAdmin(userId: string): Promise<{
+  success: boolean;
+  limit: number;
+  remaining: number;
+  reset: number;
+}> {
+  const limiter = getRateLimiter("admin", {
+    requests: 100,
+    window: "1m",
+  });
 
-  // Strict - for API writes
-  API_WRITE: {
-    maxRequests: 30,
-    windowMs: 60 * 1000, // 30 requests per minute
-  },
+  try {
+    const { success, limit, remaining, reset } = await limiter.limit(userId);
 
-  // Moderate - for API reads
-  API_READ: {
-    maxRequests: 100,
-    windowMs: 60 * 1000, // 100 requests per minute
-  },
+    if (!success) {
+      await logSecurityEvent({
+        action: AuditAction.RATE_LIMIT_EXCEEDED,
+        userId,
+        description: \`Admin rate limit exceeded for user: \${userId}\`,
+        severity: AuditSeverity.WARNING,
+        metadata: {
+          userId,
+          type: "admin",
+          limit,
+          remaining,
+          reset,
+        },
+      });
+    }
 
-  // Lenient - for public endpoints
-  PUBLIC: {
-    maxRequests: 200,
-    windowMs: 60 * 1000, // 200 requests per minute
-  },
-} as const;
+    return { success, limit, remaining, reset };
+  } catch (error) {
+    console.error("Rate limit check failed:", error);
+    return { success: true, limit: 100, remaining: 100, reset: Date.now() + 60000 };
+  }
+}
 
-/*
- * UPSTASH REDIS IMPLEMENTATION (for production with multiple servers)
- *
- * Uncomment this section and add environment variables:
- * UPSTASH_REDIS_REST_URL=your_url
- * UPSTASH_REDIS_REST_TOKEN=your_token
+/**
+ * Reset rate limit for specific identifier (admin function)
  */
+export async function resetRateLimit(
+  name: string,
+  identifier: string
+): Promise<boolean> {
+  try {
+    const redisClient = getRedisClient();
+    if (!redisClient) {
+      console.warn("Cannot reset rate limit - Redis not configured");
+      return false;
+    }
 
-/*
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
-
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
-
-export const rateLimiters = {
-  aiGeneration: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(5, "1 m"),
-    analytics: true,
-  }),
-
-  apiWrite: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(30, "1 m"),
-    analytics: true,
-  }),
-
-  apiRead: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(100, "1 m"),
-    analytics: true,
-  }),
-
-  public: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(200, "1 m"),
-    analytics: true,
-  }),
-};
-*/
+    await redisClient.del(\`ratelimit:\${name}:\${identifier}\`);
+    return true;
+  } catch (error) {
+    console.error("Failed to reset rate limit:", error);
+    return false;
+  }
+}

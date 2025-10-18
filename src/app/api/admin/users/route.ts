@@ -3,6 +3,8 @@ import { requireAdmin } from "@/lib/admin-guard";
 import { getRepository } from "@/lib/data-source";
 import { UserEntity } from "@/entities/UserEntity";
 import { Like } from "typeorm";
+import { logAdminUserAction } from "@/lib/audit-service";
+import { AuditAction } from "@/entities/AuditLogEntity";
 
 /**
  * Admin Users API
@@ -125,22 +127,58 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    // Track changes for audit log
+    const changes: string[] = [];
+    const metadata: Record<string, any> = {};
+
     // Update fields
-    if (isAdmin !== undefined) {
+    if (isAdmin !== undefined && targetUser.isAdmin !== isAdmin) {
+      const oldValue = targetUser.isAdmin;
       targetUser.isAdmin = isAdmin;
       targetUser.role = isAdmin ? "admin" : "user";
+      changes.push(`isAdmin: ${oldValue} → ${isAdmin}`);
+      metadata.isAdmin = { old: oldValue, new: isAdmin };
     }
 
-    if (role !== undefined && ["user", "admin"].includes(role)) {
+    if (role !== undefined && ["user", "admin"].includes(role) && targetUser.role !== role) {
+      const oldValue = targetUser.role;
       targetUser.role = role;
       targetUser.isAdmin = role === "admin";
+      changes.push(`role: ${oldValue} → ${role}`);
+      metadata.role = { old: oldValue, new: role };
     }
 
-    if (status !== undefined) {
+    if (status !== undefined && targetUser.status !== status) {
+      const oldValue = targetUser.status;
       targetUser.status = status;
+      changes.push(`status: ${oldValue} → ${status}`);
+      metadata.status = { old: oldValue, new: status };
     }
 
     await userRepo.save(targetUser);
+
+    // Log audit event if changes were made
+    if (changes.length > 0) {
+      // Determine the action type
+      let action = AuditAction.USER_UPDATE;
+      if (metadata.isAdmin) {
+        action = metadata.isAdmin.new
+          ? AuditAction.USER_PROMOTE_ADMIN
+          : AuditAction.USER_DEMOTE_ADMIN;
+      }
+
+      await logAdminUserAction({
+        action,
+        adminId: adminUser!.id,
+        targetUserId: targetUser.id,
+        description: `Updated user ${targetUser.email}: ${changes.join(", ")}`,
+        metadata: {
+          changes: metadata,
+          targetEmail: targetUser.email,
+          targetName: targetUser.name,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,

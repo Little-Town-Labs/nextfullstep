@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
-import { getDefaultModel, setDefaultModel } from "@/lib/ai-model-service";
+import { getDefaultModel, setDefaultModel, getModelById } from "@/lib/ai-model-service";
+import { createAuditLog } from "@/lib/audit-service";
+import { AuditAction } from "@/entities/AuditLogEntity";
 
 /**
  * Admin Default Model API
@@ -61,6 +63,26 @@ export async function PUT(req: NextRequest) {
         { error: "Model not found or failed to update" },
         { status: 404 }
       );
+    }
+
+    // Get the model details for logging
+    const model = await getModelById(modelId);
+
+    // Log audit event
+    if (model) {
+      await createAuditLog({
+        action: AuditAction.MODEL_SET_DEFAULT,
+        performedById: user!.id,
+        description: `Set default AI model to: ${model.displayName} (${model.modelId})`,
+        metadata: {
+          modelId: model.id,
+          provider: model.provider,
+          displayName: model.displayName,
+          modelId_original: model.modelId,
+        },
+        resourceType: "ai_model",
+        resourceId: modelId,
+      });
     }
 
     return NextResponse.json({

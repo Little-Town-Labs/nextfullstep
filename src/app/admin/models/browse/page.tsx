@@ -159,7 +159,9 @@ export default function BrowseModelsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to add models");
+        const errorDetails = data.details ? `\n\nDetails: ${data.details}` : '';
+        const errorMessage = data.message || data.error || "Failed to add models";
+        throw new Error(`${errorMessage}${errorDetails}`);
       }
 
       alert(
@@ -167,6 +169,7 @@ export default function BrowseModelsPage() {
       );
       router.push("/admin/models");
     } catch (err: any) {
+      console.error("Error adding models:", err);
       alert(`Error: ${err.message}`);
     } finally {
       setAdding(false);

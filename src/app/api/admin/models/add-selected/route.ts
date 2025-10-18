@@ -21,6 +21,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    console.log("Received request to add models:", {
+      modelCount: body.models?.length,
+      firstModel: body.models?.[0],
+    });
 
     if (!body.models || !Array.isArray(body.models)) {
       return NextResponse.json(
@@ -90,28 +94,60 @@ export async function POST(req: NextRequest) {
           displayName: model.displayName,
           provider: model.provider,
         });
+        console.log(`Successfully created model: ${model.modelId}`);
       } catch (err: any) {
+        console.error(`Error creating model ${selectedModel.id}:`, err);
         errors.push({
           modelId: selectedModel.id,
           error: err.message,
+          stack: err.stack,
         });
       }
     }
 
-    // Log audit event
+    // Log audit event (non-blocking, don't fail if audit log fails)
     if (createdCount > 0) {
-      await createAuditLog({
-        action: AuditAction.MODEL_CREATE,
-        performedById: user!.id,
-        description: `Added ${createdCount} AI model(s) from OpenRouter`,
-        metadata: {
-          createdCount,
-          skippedCount,
-          errorCount: errors.length,
-          models: createdModels.map((m) => m.modelId),
+      try {
+        await createAuditLog({
+          action: AuditAction.MODEL_CREATE,
+          performedById: user!.id,
+          description: `Added ${createdCount} AI model(s) from OpenRouter`,
+          metadata: {
+            createdCount,
+            skippedCount,
+            errorCount: errors.length,
+            models: createdModels.map((m) => m.modelId),
+          },
+          resourceType: "ai_model",
+        });
+      } catch (auditError: any) {
+        console.error("Failed to create audit log:", auditError);
+        // Continue anyway - audit log failure shouldn't block the operation
+      }
+    }
+
+    console.log("Final summary:", {
+      created: createdCount,
+      skipped: skippedCount,
+      errors: errors.length,
+    });
+
+    // If all models failed, return 500
+    if (createdCount === 0 && errors.length > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Failed to add any models",
+          message: `All ${errors.length} model(s) failed to be added`,
+          summary: {
+            created: 0,
+            skipped: skippedCount,
+            errors: errors.length,
+          },
+          errors: errors,
         },
-        resourceType: "ai_model",
-      });
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
@@ -127,11 +163,13 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("Error adding selected models:", error);
+    console.error("Error stack:", error.stack);
     return NextResponse.json(
       {
         success: false,
         error: "Failed to add selected models",
         message: error.message,
+        details: process.env.NODE_ENV === "development" ? error.stack : undefined,
       },
       { status: 500 }
     );

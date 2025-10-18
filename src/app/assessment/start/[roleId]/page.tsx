@@ -14,6 +14,7 @@ export default function AssessmentPage() {
   const { user, isLoaded } = useUser();
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [roleName, setRoleName] = useState("");
   const [assessmentId, setAssessmentId] = useState("");
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -54,6 +55,17 @@ export default function AssessmentPage() {
 
         const assessmentData = await assessmentRes.json();
 
+        if (!assessmentRes.ok) {
+          // Handle API errors
+          setError(
+            assessmentData.message ||
+            assessmentData.error ||
+            "Failed to start assessment"
+          );
+          setLoading(false);
+          return;
+        }
+
         if (assessmentData.success) {
           setAssessmentId(assessmentData.assessment.id);
           setCurrentQuestion(
@@ -69,6 +81,7 @@ export default function AssessmentPage() {
         setLoading(false);
       } catch (error) {
         console.error("Error initializing assessment:", error);
+        setError("An unexpected error occurred. Please try again.");
         setLoading(false);
       }
     }
@@ -174,6 +187,28 @@ export default function AssessmentPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading assessment...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <Card className="p-8 max-w-md text-center">
+          <div className="text-red-600 text-5xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            Unable to Start Assessment
+          </h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <div className="flex gap-4 justify-center">
+            <Button variant="outline" onClick={() => router.push("/careers")}>
+              Back to Careers
+            </Button>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
+        </Card>
       </div>
     );
   }

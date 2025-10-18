@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getQuestionsForRole } from "@/lib/assessment-questions";
@@ -10,6 +11,7 @@ export default function AssessmentPage() {
   const router = useRouter();
   const params = useParams();
   const roleId = params.roleId as string;
+  const { user, isLoaded } = useUser();
 
   const [loading, setLoading] = useState(true);
   const [roleName, setRoleName] = useState("");
@@ -23,11 +25,17 @@ export default function AssessmentPage() {
 
   const questions = getQuestionsForRole(roleId);
 
-  // Temporary user ID (in production, get from auth)
-  const userId = "demo-user-123";
-
   useEffect(() => {
     async function initAssessment() {
+      // Wait for Clerk to load
+      if (!isLoaded) return;
+
+      // Require authentication
+      if (!user) {
+        router.push("/sign-in");
+        return;
+      }
+
       try {
         // Fetch role details
         const roleRes = await fetch(`/api/careers?id=${roleId}`);
@@ -41,7 +49,7 @@ export default function AssessmentPage() {
         const assessmentRes = await fetch("/api/assessment", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, roleId }),
+          body: JSON.stringify({ roleId }),
         });
 
         const assessmentData = await assessmentRes.json();
@@ -66,7 +74,7 @@ export default function AssessmentPage() {
     }
 
     initAssessment();
-  }, [roleId]);
+  }, [roleId, isLoaded, user, router]);
 
   const handleNext = async () => {
     if (!currentAnswer.trim()) {

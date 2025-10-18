@@ -26,6 +26,42 @@ export class UserEntity {
   @Column({ type: "varchar", length: 255, nullable: true })
   currentLocation?: string; // City/region for salary calibration
 
+  // Career Profile (From Onboarding)
+  @Column({ type: "varchar", length: 50, nullable: true })
+  experienceLevel?: string; // beginner, some-experience, intermediate, advanced
+
+  @Column({ type: "varchar", length: 50, nullable: true })
+  timeCommitment?: string; // casual, parttime, serious, fulltime
+
+  // Career Readiness (From Landing Page Assessment)
+  @Column({ type: "int", nullable: true })
+  @Index()
+  careerReadinessScore?: number; // 0-100 from landing page assessment
+
+  @Column({ type: "varchar", length: 20, nullable: true })
+  qualificationTier?: string; // cold, warm, hot, qualified - for sales prioritization
+
+  @Column({ type: "varchar", length: 100, nullable: true })
+  currentSituation?: string; // student, early_career, mid_career, senior, career_break, entrepreneur
+
+  @Column({ type: "varchar", length: 100, nullable: true })
+  desiredOutcome?: string; // first_project, full_time_role, upskill, start_business, transition_role, exploring
+
+  // Progress Tracking
+  @Column({ type: "int", default: 0 })
+  currentStreak?: number; // Days in a row working on roadmap
+
+  @Column({ type: "timestamp", nullable: true })
+  lastActiveDate?: Date; // Last time they engaged with platform
+
+  // Attribution (Links to Landing Page Assessment)
+  @Column({ type: "uuid", nullable: true })
+  @Index()
+  linkedAssessmentLeadId?: string; // Links to AssessmentLeadEntity if they came from landing page
+
+  @Column({ type: "varchar", length: 100, nullable: true })
+  acquisitionChannel?: string; // organic, landing_page_assessment, direct_signup
+
   // Subscription Management
   @Column({ type: "varchar", length: 50, default: "free" })
   subscriptionTier!: string; // free, pro, enterprise

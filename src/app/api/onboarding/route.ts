@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { selectedGoal } = await req.json();
+    const { selectedGoal, experienceLevel, timeCommitment } = await req.json();
 
     // Use singleton repository pattern for serverless
     const userRepository = await getRepository(UserEntity);
@@ -42,6 +42,20 @@ export async function POST(req: NextRequest) {
       user.selectedRoleId = selectedGoal;
     }
 
+    // Save experience level and time commitment
+    if (experienceLevel) {
+      user.experienceLevel = experienceLevel;
+    }
+
+    if (timeCommitment) {
+      user.timeCommitment = timeCommitment;
+    }
+
+    // Set acquisition channel if not already set
+    if (!user.acquisitionChannel) {
+      user.acquisitionChannel = "direct_signup";
+    }
+
     await userRepository.save(user);
 
     return NextResponse.json({
@@ -51,6 +65,9 @@ export async function POST(req: NextRequest) {
         id: user.id,
         onboardingCompleted: user.onboardingCompleted,
         selectedRoleId: user.selectedRoleId,
+        experienceLevel: user.experienceLevel,
+        timeCommitment: user.timeCommitment,
+        acquisitionChannel: user.acquisitionChannel,
       },
     });
   } catch (error: any) {

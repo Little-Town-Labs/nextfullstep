@@ -48,8 +48,8 @@ export async function POST(req: NextRequest) {
         description: config.description,
         isEnabled: true,
         isDefault: modelId === "openai/gpt-4o-mini", // Set GPT-4o Mini as default
-        costPer1kInputTokens: config.costPer1kInputTokens,
-        costPer1kOutputTokens: config.costPer1kOutputTokens,
+        costPer1kInputTokens: config.costPer1MInputTokens,
+        costPer1kOutputTokens: config.costPer1MOutputTokens,
         maxTokens: config.maxTokens,
         temperature: 0.7,
         maxOutputTokens: 3000,

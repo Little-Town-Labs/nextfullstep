@@ -55,9 +55,10 @@ export async function POST(req: NextRequest) {
         // Extract provider from model ID (format: "provider/model-name")
         const provider = selectedModel.id.split("/")[0] || "unknown";
 
-        // Calculate cost per 1k tokens (OpenRouter pricing is per token, we need per 1k tokens)
-        const costPer1kInputTokens = selectedModel.pricing.prompt * 1000;
-        const costPer1kOutputTokens = selectedModel.pricing.completion * 1000;
+        // OpenRouter pricing is per 1M tokens - store directly
+        // (Database columns are named costPer1k but actually store per-1M values)
+        const costPer1kInputTokens = selectedModel.pricing.prompt;
+        const costPer1kOutputTokens = selectedModel.pricing.completion;
 
         // Check if this should be the first/default model
         const modelCount = await modelRepo.count();

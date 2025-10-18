@@ -28,22 +28,24 @@ export const openrouter = createOpenAI({
 /**
  * Predefined model configurations
  * These can be overridden by database configurations
+ *
+ * NOTE: All costs are per 1 MILLION tokens (OpenRouter standard)
  */
 export const PREDEFINED_MODELS = {
   // OpenAI Models
   'openai/gpt-4o-mini': {
     displayName: 'GPT-4o Mini',
     provider: 'openai',
-    costPer1kInputTokens: 0.15,
-    costPer1kOutputTokens: 0.60,
+    costPer1MInputTokens: 0.15,
+    costPer1MOutputTokens: 0.60,
     maxTokens: 128000,
     description: 'Fast and cost-effective for most tasks',
   },
   'openai/gpt-4o': {
     displayName: 'GPT-4o',
     provider: 'openai',
-    costPer1kInputTokens: 2.50,
-    costPer1kOutputTokens: 10.00,
+    costPer1MInputTokens: 2.50,
+    costPer1MOutputTokens: 10.00,
     maxTokens: 128000,
     description: 'Most capable OpenAI model for complex reasoning',
   },
@@ -52,16 +54,16 @@ export const PREDEFINED_MODELS = {
   'anthropic/claude-3.5-sonnet': {
     displayName: 'Claude 3.5 Sonnet',
     provider: 'anthropic',
-    costPer1kInputTokens: 3.00,
-    costPer1kOutputTokens: 15.00,
+    costPer1MInputTokens: 3.00,
+    costPer1MOutputTokens: 15.00,
     maxTokens: 200000,
     description: 'Best for nuanced analysis and career coaching',
   },
   'anthropic/claude-3-haiku': {
     displayName: 'Claude 3 Haiku',
     provider: 'anthropic',
-    costPer1kInputTokens: 0.25,
-    costPer1kOutputTokens: 1.25,
+    costPer1MInputTokens: 0.25,
+    costPer1MOutputTokens: 1.25,
     maxTokens: 200000,
     description: 'Fast and affordable for quick assessments',
   },
@@ -70,16 +72,16 @@ export const PREDEFINED_MODELS = {
   'google/gemini-pro': {
     displayName: 'Gemini Pro',
     provider: 'google',
-    costPer1kInputTokens: 0.50,
-    costPer1kOutputTokens: 1.50,
+    costPer1MInputTokens: 0.50,
+    costPer1MOutputTokens: 1.50,
     maxTokens: 32000,
     description: 'Google\'s multimodal model',
   },
   'google/gemini-flash': {
     displayName: 'Gemini Flash',
     provider: 'google',
-    costPer1kInputTokens: 0.075,
-    costPer1kOutputTokens: 0.30,
+    costPer1MInputTokens: 0.075,
+    costPer1MOutputTokens: 0.30,
     maxTokens: 32000,
     description: 'Fastest Google model for quick responses',
   },
@@ -88,10 +90,20 @@ export const PREDEFINED_MODELS = {
   'meta-llama/llama-3.1-70b-instruct': {
     displayName: 'Llama 3.1 70B',
     provider: 'meta',
-    costPer1kInputTokens: 0.80,
-    costPer1kOutputTokens: 0.80,
+    costPer1MInputTokens: 0.80,
+    costPer1MOutputTokens: 0.80,
     maxTokens: 128000,
     description: 'Open source alternative with strong performance',
+  },
+
+  // xAI Models
+  'x-ai/grok-4-fast': {
+    displayName: 'Grok 4 Fast',
+    provider: 'xai',
+    costPer1MInputTokens: 0.20,
+    costPer1MOutputTokens: 0.50,
+    maxTokens: 2000000, // 2M context
+    description: 'Fast reasoning model with 2M context window',
   },
 } as const;
 
@@ -139,8 +151,8 @@ export function calculateCost(
   const modelConfig = PREDEFINED_MODELS[modelId as keyof typeof PREDEFINED_MODELS];
   if (!modelConfig) return 0;
 
-  const inputCost = (inputTokens / 1000) * modelConfig.costPer1kInputTokens;
-  const outputCost = (outputTokens / 1000) * modelConfig.costPer1kOutputTokens;
+  const inputCost = (inputTokens / 1_000_000) * modelConfig.costPer1MInputTokens;
+  const outputCost = (outputTokens / 1_000_000) * modelConfig.costPer1MOutputTokens;
 
   return inputCost + outputCost;
 }

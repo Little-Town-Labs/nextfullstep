@@ -27,10 +27,10 @@ export class AIModelConfigEntity {
   isDefault!: boolean; // Default model for new assessments
 
   @Column({ type: "decimal", precision: 10, scale: 4, nullable: true })
-  costPer1kInputTokens?: number; // Cost per 1k input tokens in USD
+  costPer1kInputTokens?: number; // Cost per 1M input tokens in USD (OpenRouter standard)
 
   @Column({ type: "decimal", precision: 10, scale: 4, nullable: true })
-  costPer1kOutputTokens?: number; // Cost per 1k output tokens in USD
+  costPer1kOutputTokens?: number; // Cost per 1M output tokens in USD (OpenRouter standard)
 
   @Column({ type: "int", nullable: true })
   maxTokens?: number; // Maximum tokens supported

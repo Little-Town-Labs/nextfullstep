@@ -5,6 +5,7 @@ import { getRepository } from "@/lib/data-source";
 import { CareerAssessmentEntity } from "@/entities/CareerAssessmentEntity";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DeleteAssessmentButton } from "@/components/assessment/DeleteAssessmentButton";
 
 export default async function AssessmentsPage() {
   const { userId: clerkUserId } = await auth();
@@ -127,26 +128,32 @@ export default async function AssessmentsPage() {
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex gap-2">
-                    {assessment.status === "completed" ? (
-                      <Link
-                        href={`/assessment/${assessment.id}/results`}
-                        className="flex-1"
-                      >
-                        <Button className="w-full" variant="default">
-                          View Results
-                        </Button>
-                      </Link>
-                    ) : (
-                      <Link
-                        href={`/assessment/start/${assessment.roleId}`}
-                        className="flex-1"
-                      >
-                        <Button className="w-full" variant="default">
-                          Continue
-                        </Button>
-                      </Link>
-                    )}
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2">
+                      {assessment.status === "completed" ? (
+                        <Link
+                          href={`/assessment/${assessment.id}/results`}
+                          className="flex-1"
+                        >
+                          <Button className="w-full" variant="default">
+                            View Results
+                          </Button>
+                        </Link>
+                      ) : (
+                        <Link
+                          href={`/assessment/start/${assessment.roleId}`}
+                          className="flex-1"
+                        >
+                          <Button className="w-full" variant="default">
+                            Continue
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                    <DeleteAssessmentButton
+                      assessmentId={assessment.id}
+                      assessmentName={assessment.roleName}
+                    />
                   </div>
 
                   {/* Completed Date */}

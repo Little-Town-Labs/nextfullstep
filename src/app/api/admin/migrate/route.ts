@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-guard";
-import { getDataSource } from "@/lib/data-source";
+import { initializeDatabase } from "@/lib/data-source";
 
 /**
  * Admin endpoint to run pending database migrations
@@ -15,7 +15,7 @@ export async function GET() {
   if (error) return error;
 
   try {
-    const dataSource = await getDataSource();
+    const dataSource = await initializeDatabase();
 
     // Check if migrations are needed
     const pendingMigrations = await dataSource.showMigrations();
@@ -34,7 +34,7 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       message: `Successfully ran ${migrations.length} migration(s)`,
-      migrations: migrations.map(m => ({
+      migrations: migrations.map((m: any) => ({
         name: m.name,
         timestamp: m.timestamp,
       })),

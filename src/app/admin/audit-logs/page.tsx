@@ -46,8 +46,8 @@ export default function AuditLogsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [filters, setFilters] = useState({
-    action: "",
-    severity: "",
+    action: "all",
+    severity: "all",
     search: "",
   });
 
@@ -57,8 +57,8 @@ export default function AuditLogsPage() {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: "20",
-        ...(filters.action && { action: filters.action }),
-        ...(filters.severity && { severity: filters.severity }),
+        ...(filters.action && filters.action !== "all" && { action: filters.action }),
+        ...(filters.severity && filters.severity !== "all" && { severity: filters.severity }),
       });
 
       const response = await fetch(`/api/admin/audit-logs?${params}`);
@@ -141,14 +141,14 @@ export default function AuditLogsPage() {
               <Select
                 value={filters.action}
                 onValueChange={(value) =>
-                  setFilters({ ...filters, action: value })
+                  setFilters({ ...filters, action: value === "all" ? "" : value })
                 }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All Actions" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Actions</SelectItem>
+                  <SelectItem value="all">All Actions</SelectItem>
                   <SelectItem value="user_promote_admin">Promote Admin</SelectItem>
                   <SelectItem value="user_demote_admin">Demote Admin</SelectItem>
                   <SelectItem value="user_update">Update User</SelectItem>
@@ -165,14 +165,14 @@ export default function AuditLogsPage() {
               <Select
                 value={filters.severity}
                 onValueChange={(value) =>
-                  setFilters({ ...filters, severity: value })
+                  setFilters({ ...filters, severity: value === "all" ? "" : value })
                 }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All Severities" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Severities</SelectItem>
+                  <SelectItem value="all">All Severities</SelectItem>
                   <SelectItem value="info">Info</SelectItem>
                   <SelectItem value="warning">Warning</SelectItem>
                   <SelectItem value="error">Error</SelectItem>
@@ -188,7 +188,7 @@ export default function AuditLogsPage() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  setFilters({ action: "", severity: "", search: "" });
+                  setFilters({ action: "all", severity: "all", search: "" });
                   setPage(1);
                 }}
                 className="w-full"

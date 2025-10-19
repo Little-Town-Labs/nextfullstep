@@ -37,17 +37,17 @@ export function parseRoadmapFromAnalysis(analysisText: string): ParsedRoadmap {
     {
       phaseId: "immediate",
       phaseName: "Immediate Actions (Next 30 days)",
-      keywords: ["immediate", "next 30 days", "right now", "start immediately"],
+      keywords: ["immediate actions", "next 30 days", "right now", "start immediately"],
     },
     {
       phaseId: "short_term",
-      phaseName: "3-6 Month Goals",
-      keywords: ["3-6 month", "short term", "next few months"],
+      phaseName: "2-3 Month Goals",
+      keywords: ["2-3 month", "3-6 month", "short term", "next few months"],
     },
     {
       phaseId: "mid_term",
-      phaseName: "6-12 Month Milestones",
-      keywords: ["6-12 month", "long term", "next year"],
+      phaseName: "3-6 Month Milestones",
+      keywords: ["3-6 month milestones", "6-12 month", "long term", "next year"],
     },
   ];
 

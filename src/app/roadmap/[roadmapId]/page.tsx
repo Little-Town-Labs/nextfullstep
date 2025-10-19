@@ -60,6 +60,7 @@ export default function RoadmapPage() {
   const [editingNotes, setEditingNotes] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
   const [convertingTask, setConvertingTask] = useState<string | null>(null);
+  const [convertingPhase, setConvertingPhase] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRoadmap();
@@ -72,9 +73,6 @@ export default function RoadmapPage() {
       const data = await res.json();
 
       if (data.success) {
-        console.log("Roadmap data:", data.roadmap);
-        console.log("Phases:", data.roadmap.phases);
-        console.log("Number of phases:", data.roadmap.phases?.length);
         setRoadmap(data.roadmap);
       } else {
         console.error("Failed to fetch roadmap:", data.error);
@@ -159,6 +157,68 @@ export default function RoadmapPage() {
       toast.error("Failed to create todo: " + message);
     } finally {
       setConvertingTask(null);
+    }
+  };
+
+  const convertPhaseToTodos = async (phase: Phase) => {
+    setConvertingPhase(phase.phaseId);
+
+    // Only convert incomplete tasks
+    const incompleteTasks = phase.tasks.filter(t => t.status !== "completed");
+
+    if (incompleteTasks.length === 0) {
+      toast.info("All tasks in this phase are already completed!");
+      setConvertingPhase(null);
+      return;
+    }
+
+    try {
+      let successCount = 0;
+      let skipCount = 0;
+      let errorCount = 0;
+
+      // Convert tasks in parallel
+      const results = await Promise.allSettled(
+        incompleteTasks.map(task =>
+          fetch("/api/todos/from-roadmap", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ roadmapTaskId: task.id }),
+          }).then(res => res.json())
+        )
+      );
+
+      results.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+          if (result.value.success) {
+            successCount++;
+          } else if (result.value.error?.includes("already exists")) {
+            skipCount++;
+          } else {
+            errorCount++;
+          }
+        } else {
+          errorCount++;
+        }
+      });
+
+      // Show summary toast
+      if (successCount > 0) {
+        toast.success(`Created ${successCount} todo${successCount > 1 ? 's' : ''} from ${phase.phaseName}!`);
+      }
+      if (skipCount > 0) {
+        toast.info(`Skipped ${skipCount} task${skipCount > 1 ? 's' : ''} (already converted)`);
+      }
+      if (errorCount > 0) {
+        toast.error(`Failed to convert ${errorCount} task${errorCount > 1 ? 's' : ''}`);
+      }
+
+      await fetchRoadmap(); // Refresh
+    } catch (error) {
+      console.error("Error converting phase to todos:", error);
+      toast.error("Failed to convert phase tasks to todos");
+    } finally {
+      setConvertingPhase(null);
     }
   };
 
@@ -332,9 +392,23 @@ export default function RoadmapPage() {
                       {completedInPhase} of {phase.tasks.length} tasks completed
                     </CardDescription>
                   </div>
-                  <Badge variant="outline" className="text-lg px-4 py-2">
-                    {phaseProgress}%
-                  </Badge>
+                  <div className="flex items-center gap-3">
+                    <Badge variant="outline" className="text-lg px-4 py-2">
+                      {phaseProgress}%
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => convertPhaseToTodos(phase)}
+                      disabled={convertingPhase === phase.phaseId}
+                      className="gap-2"
+                    >
+                      <ListTodo className="h-4 w-4" />
+                      {convertingPhase === phase.phaseId
+                        ? "Converting..."
+                        : "Convert Phase to Todos"}
+                    </Button>
+                  </div>
                 </div>
                 <Progress value={phaseProgress} className="mt-2" />
               </CardHeader>

@@ -24,6 +24,8 @@ let dataSourceInstance: DataSource | null = null;
 
 function getDataSourceConfig() {
   const isProduction = process.env.NODE_ENV === 'production';
+  // Allow forcing synchronize via env var (useful for schema updates in production)
+  const forceSynchronize = process.env.FORCE_SYNCHRONIZE === 'true';
 
   return {
     type: "postgres" as const,
@@ -32,7 +34,7 @@ function getDataSourceConfig() {
       rejectUnauthorized: false, // Required for NeonDB
     },
     // Use synchronize in development for convenience, migrations in production
-    synchronize: !isProduction,
+    synchronize: !isProduction || forceSynchronize,
     logging: process.env.DATABASE_LOGGING === 'true',
     entities: [
       UserEntity,

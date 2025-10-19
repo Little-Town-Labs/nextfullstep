@@ -13,7 +13,7 @@ export class UserTodoEntity {
   @Index() // Index for fast user queries
   userId!: string; // Clerk user ID
 
-  @Column({ type: "varchar", length: 255 })
+  @Column({ type: "text" })
   title!: string;
 
   @Column({ type: "text", nullable: true })

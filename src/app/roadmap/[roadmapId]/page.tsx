@@ -72,6 +72,9 @@ export default function RoadmapPage() {
       const data = await res.json();
 
       if (data.success) {
+        console.log("Roadmap data:", data.roadmap);
+        console.log("Phases:", data.roadmap.phases);
+        console.log("Number of phases:", data.roadmap.phases?.length);
         setRoadmap(data.roadmap);
       } else {
         console.error("Failed to fetch roadmap:", data.error);
@@ -300,7 +303,15 @@ export default function RoadmapPage() {
         </div>
 
         {/* Phases */}
-        {roadmap.phases.map((phase) => {
+        {!roadmap.phases || roadmap.phases.length === 0 ? (
+          <Card className="mb-6">
+            <CardContent className="py-8 text-center text-gray-500">
+              <p>No phases found in this roadmap.</p>
+              <p className="text-sm mt-2">This might indicate a data issue. Check the browser console for details.</p>
+            </CardContent>
+          </Card>
+        ) : null}
+        {roadmap.phases?.map((phase) => {
           const completedInPhase = phase.tasks.filter(
             (t) => t.status === "completed"
           ).length;
